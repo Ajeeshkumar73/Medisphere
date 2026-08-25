@@ -1,0 +1,1022 @@
+<!doctype html>
+
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>MediSphere | User Dashboard</title>
+    {% include 'tailwind_setup.html' %}
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8fafc;
+      }
+      .card-shadow {
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+        vertical-align: middle;
+      }
+      .progress-ring__circle {
+        transition: stroke-dashoffset 0.35s;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body class="flex min-h-screen">
+    <!-- Side Navigation Shell -->
+    <aside
+      class="h-screen sticky left-0 w-64 flex flex-col bg-white border-r border-slate-200 hidden md:flex p-4 gap-2 z-50"
+    >
+      <div class="mb-6 px-2">
+        <a href="/" class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-primary">MediSphere</h1>
+        </a>
+        <p
+          class="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1"
+        >
+          Patient Portal
+        </p>
+      </div>
+      <nav class="flex-1 space-y-1">
+        <!-- Active: Dashboard -->
+        <a
+          class="flex items-center gap-3 px-4 py-3 bg-primary text-white font-semibold rounded-lg transition-colors"
+          href="{% url 'user_dashboard' %}"
+        >
+          <span class="material-symbols-outlined" data-icon="dashboard"
+            >dashboard</span
+          >
+          <span class="font-label-md text-label-md">Dashboard</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_profile' %}"
+        >
+          <span class="material-symbols-outlined">manage_accounts</span>
+          <span class="font-label-md text-label-md">My Profile</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'medical_reports' %}"
+        >
+          <span class="material-symbols-outlined" data-icon="folder_shared"
+            >folder_shared</span
+          >
+          <span class="font-label-md text-label-md">Medical Records</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_appointments' %}"
+        >
+          <span class="material-symbols-outlined">calendar_month</span>
+          <span class="font-label-md text-label-md">Appointments & Orders</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'ai_analyser' %}"
+        >
+          <span class="material-symbols-outlined" data-icon="analytics"
+            >analytics</span
+          >
+          <span class="font-label-md text-label-md">AI Analyzer & Summary</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_pharmacy' %}"
+        >
+          <span class="material-symbols-outlined" data-icon="medical_services"
+            >medical_services</span
+          >
+          <span class="font-label-md text-label-md">Pharmacy</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_lab' %}"
+        >
+          <span class="material-symbols-outlined">biotech</span>
+          <span class="font-label-md text-label-md">Laboratory</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'expenses' %}"
+        >
+          <span class="material-symbols-outlined" data-icon="payments"
+            >payments</span
+          >
+          <span class="font-label-md text-label-md">Expenses</span>
+        </a>
+      </nav>
+      <div
+        class="mt-auto pt-unit-md border-t border-outline-variant/20 space-y-1"
+      >
+        <a
+          class="flex items-center gap-3 px-4 py-2 text-error hover:bg-error/5 rounded-lg"
+          href="{% url 'logout' %}"
+        >
+          <span class="material-symbols-outlined">logout</span>
+          <span class="font-label-md text-label-md">Sign Out</span>
+        </a>
+      </div>
+    </aside>
+    <!-- Main Canvas -->
+    <main class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+      <!-- Top Navigation -->
+      <header
+        class="docked full-width top-0 sticky bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm flex justify-between items-center w-full px-margin-desktop h-16 z-40"
+      >
+        <div class="flex items-center gap-unit-md flex-1">
+          <!-- Live Search -->
+          <div class="relative w-full max-w-lg" id="searchWrapper">
+            <span
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined"
+              >search</span
+            >
+            <input
+              id="dashboardSearchInput"
+              class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-body-md focus:ring-2 focus:ring-primary/20 outline-none"
+              placeholder="Search medicines, lab tests, stores or labs…"
+              type="text"
+              autocomplete="off"
+            />
+            <div
+              id="searchSpinner"
+              class="hidden absolute right-3 top-1/2 -translate-y-1/2"
+            >
+              <svg
+                class="animate-spin h-4 w-4 text-primary"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                ></path>
+              </svg>
+            </div>
+
+            <!-- Results Dropdown -->
+            <div
+              id="searchDropdown"
+              class="absolute left-0 top-[calc(100%+8px)] w-full min-w-[420px] bg-white border border-outline-variant/30 rounded-2xl shadow-2xl z-[999] hidden overflow-hidden"
+            >
+              <div
+                id="searchResults"
+                class="max-h-[420px] overflow-y-auto"
+              ></div>
+              <div
+                id="searchEmpty"
+                class="hidden text-center py-8 text-on-surface-variant"
+              >
+                <span
+                  class="material-symbols-outlined text-[32px] text-outline-variant"
+                  >search_off</span
+                >
+                <p class="text-xs mt-2 text-outline">
+                  No results found. Try a different name.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-unit-lg">
+          <div class="flex items-center gap-unit-sm">
+            <!-- Notification Bell -->
+            <div class="relative" id="notifWrapper">
+              <button
+                id="notifBell"
+                onclick="toggleNotifPanel()"
+                class="p-2 text-on-surface-variant hover:bg-primary-container/10 hover:text-primary transition-colors rounded-full relative"
+              >
+                <span
+                  class="material-symbols-outlined"
+                  data-icon="notifications"
+                  >notifications</span
+                >
+                {% if unread_count %}
+                <span
+                  class="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 bg-error rounded-full text-white text-[10px] font-black flex items-center justify-center leading-none"
+                >
+                  {{ unread_count }}
+                </span>
+                {% endif %}
+              </button>
+
+              <!-- Dropdown panel -->
+              <div
+                id="notifPanel"
+                class="absolute right-0 top-12 w-80 bg-white border border-outline-variant/30 rounded-[20px] shadow-2xl z-50 hidden overflow-hidden"
+                style="max-height: 480px"
+              >
+                <!-- Panel header -->
+                <div
+                  class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/20"
+                >
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="material-symbols-outlined text-primary text-[20px]"
+                      >notifications</span
+                    >
+                    <span class="font-bold text-sm text-on-surface"
+                      >Notifications</span
+                    >
+                    {% if unread_count %}
+                    <span
+                      class="bg-error text-white text-[10px] font-black px-1.5 py-0.5 rounded-full"
+                      >{{ unread_count }}</span
+                    >
+                    {% endif %}
+                  </div>
+                  {% if unread_count %}
+                  <form
+                    method="POST"
+                    action="{% url 'mark_notifications_read' %}"
+                  >
+                    {% csrf_token %}
+                    <button
+                      type="submit"
+                      class="text-[11px] font-bold text-primary hover:underline"
+                    >
+                      Mark all read
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+
+                <!-- Notification list -->
+                <div class="overflow-y-auto" style="max-height: 390px">
+                  {% if notifications %} {% for notif in notifications %}
+                  <a
+                    href="{{ notif.link|default:'#' }}"
+                    class="flex items-start gap-3 px-5 py-3.5 border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors {% if not notif.is_read %}bg-primary/[0.04]{% endif %}"
+                  >
+                    <span
+                      class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-base {% if notif.notif_type == 'lab_confirmed' %}bg-secondary/10{% elif notif.notif_type == 'lab_cancelled' %}bg-error/10{% elif notif.notif_type == 'lab_report' %}bg-primary/10{% elif notif.notif_type == 'lab_sample' %}bg-purple-50{% else %}bg-surface-container{% endif %}"
+                    >
+                      {% if notif.notif_type == 'lab_confirmed' %}{% elif notif.notif_type == 'lab_cancelled' %}{% elif notif.notif_type == 'lab_report' %}{% elif notif.notif_type == 'lab_sample' %}{% else %}{% endif %}
+                    </span>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-[12px] font-bold text-on-surface truncate">
+                        {{ notif.title }}
+                      </p>
+                      <p
+                        class="text-[11px] text-on-surface-variant leading-snug mt-0.5"
+                      >
+                        {{ notif.message|truncatechars:80 }}
+                      </p>
+                      <p class="text-[10px] text-outline mt-1">
+                        {{ notif.created_at|timesince }} ago
+                      </p>
+                    </div>
+                    {% if not notif.is_read %}
+                    <span
+                      class="flex-shrink-0 w-2 h-2 mt-1.5 bg-primary rounded-full"
+                    ></span>
+                    {% endif %}
+                  </a>
+                  {% endfor %} {% else %}
+                  <div class="text-center py-10 text-on-surface-variant">
+                    <span
+                      class="material-symbols-outlined text-[36px] text-outline-variant"
+                      >notifications_off</span
+                    >
+                    <p class="text-xs mt-2 text-outline">
+                      No notifications yet.
+                    </p>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-3 pl-unit-md border-l border-outline-variant/30"
+          >
+            <div
+              class="w-10 h-10 rounded-full border-2 border-primary/20 bg-primary flex items-center justify-center text-white font-bold text-label-md"
+            >
+              {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            </div>
+            <div class="text-right hidden sm:block">
+              <p class="font-label-md text-label-md font-bold text-on-surface">
+                {{ user.get_full_name|default:user.username }}
+              </p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">
+                {% if profile %}{{ profile.get_role_display }}{% else %}Member{% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+      <!-- Dashboard Content -->
+      <div
+        class="p-margin-desktop max-w-container-max-width mx-auto w-full space-y-gutter"
+      >
+        <!-- Welcome Banner -->
+        <section
+          class="relative overflow-hidden rounded-[20px] bg-primary text-white p-unit-lg flex flex-col md:flex-row justify-between items-center"
+        >
+          <div class="relative z-10">
+            <h2 class="font-headline-lg text-headline-lg mb-2">
+              Good morning, {{ user.first_name|default:"there" }}.
+            </h2>
+            <p class="font-body-lg text-body-lg opacity-90">
+              Your health score is looking stable today. You've hit 90% of your
+              activity goals this week!
+            </p>
+            <div class="mt-6 flex gap-3">
+              <button
+                class="bg-white text-primary px-6 py-2.5 rounded-xl font-bold text-label-md hover:bg-slate-100 transition-colors"
+              >
+                View Daily Insights
+              </button>
+              <a
+                href="{% url 'ai_analyser' %}"
+                class="bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-label-md border border-white/20 hover:bg-blue-800 transition-colors"
+              >
+                Health Checkup
+              </a>
+            </div>
+          </div>
+          <div class="relative z-10 hidden lg:block"></div>
+        </section>
+        <!-- Key Metrics Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+          <!-- Real AI Health Index Score Card -->
+          <div class="bg-surface-container-lowest p-unit-md rounded-[20px] border border-outline-variant/30 card-shadow flex flex-col items-center text-center justify-between">
+            <div class="w-full flex justify-between items-center mb-2">
+              <p class="text-on-surface-variant font-label-md text-label-md">AI Health Index</p>
+              <a href="{% url 'ai_analyser' %}" class="text-[11px] font-bold text-primary hover:underline flex items-center gap-0.5">
+                Full AI Report <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+              </a>
+            </div>
+            <div class="relative inline-flex items-center justify-center my-2">
+              <svg class="w-28 h-28 -rotate-90">
+                <circle class="text-surface-container-high" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-width="8"></circle>
+                <circle class="text-primary" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-dasharray="301" stroke-dashoffset="{{ 301|add:'-240' }}" stroke-linecap="round" stroke-width="8"></circle>
+              </svg>
+              <span class="absolute text-headline-lg font-headline-lg text-primary font-extrabold">
+                {{ ai_summary.health_index_score|default:"85" }}
+              </span>
+            </div>
+            <p class="text-on-surface-variant font-label-sm text-label-sm mt-1">
+              {% if ai_summary.health_index_score >= 85 %}
+                <span class="text-green-600 font-bold">Optimal Clinical Baseline</span>
+              {% elif ai_summary.health_index_score >= 65 %}
+                <span class="text-amber-600 font-bold">Moderate Flags Detected</span>
+              {% else %}
+                <span class="text-error font-bold">Doctor Review Recommended</span>
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Patient Vitals & Blood Group Card -->
+          <div class="bg-surface-container-lowest p-unit-md rounded-[20px] border border-outline-variant/30 card-shadow flex flex-col justify-between">
+            <div class="flex justify-between items-start mb-3">
+              <p class="text-on-surface-variant font-label-md text-label-md">Vitals &amp; Blood Group</p>
+              <span class="bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full text-label-sm font-extrabold">
+                {{ ai_summary.blood_group|default:"O+" }}
+              </span>
+            </div>
+            <div class="space-y-2 text-label-sm">
+              <div class="flex justify-between items-center">
+                <span class="text-on-surface-variant">BMI Index:</span>
+                <span class="font-bold text-on-surface">{{ ai_summary.bmi|default:"22.4" }} ({{ ai_summary.bmi_status|default:"Optimal" }})</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-on-surface-variant">Height / Weight:</span>
+                <span class="font-bold text-on-surface">{{ ai_summary.height_cm|default:"--" }} cm / {{ ai_summary.weight_kg|default:"--" }} kg</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-on-surface-variant">Age / Gender:</span>
+                <span class="font-bold text-on-surface">{{ ai_summary.age|default:"N/A" }} Yrs / {{ ai_summary.gender|default:"N/A" }}</span>
+              </div>
+            </div>
+            <div class="mt-3 pt-2 border-t border-outline-variant/10 text-[11px] text-on-surface-variant flex items-center gap-1">
+              <span class="material-symbols-outlined text-secondary text-[16px]">monitor_weight</span>
+              Physiological Vitals Baseline
+            </div>
+          </div>
+
+          <!-- Active Disease & Treatment Card -->
+          <div class="bg-surface-container-lowest p-unit-md rounded-[20px] border border-outline-variant/30 card-shadow flex flex-col justify-between">
+            <div class="flex justify-between items-start mb-2">
+              <p class="text-on-surface-variant font-label-md text-label-md">Medical Condition</p>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase {% if ai_summary.disease_name %}bg-amber-100 text-amber-800{% else %}bg-green-100 text-green-800{% endif %}">
+                {% if ai_summary.disease_name %}Active Treatment{% else %}Clear History{% endif %}
+              </span>
+            </div>
+            <div>
+              <p class="text-label-md font-bold text-on-surface">
+                {{ ai_summary.disease_name|default:"No Chronic Disease Logged" }}
+              </p>
+              {% if ai_summary.disease_name %}
+              <p class="text-[11px] text-on-surface-variant mt-1">
+                Ongoing treatment duration: <strong>{{ ai_summary.treatment_years }} year(s)</strong>
+              </p>
+              {% else %}
+              <p class="text-[11px] text-on-surface-variant mt-1">
+                No active chronic illness logged in medical profile.
+              </p>
+              {% endif %}
+            </div>
+            <a href="{% url 'user_profile' %}" class="mt-3 text-primary text-[11px] font-bold hover:underline flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">edit_note</span> Update Profile History
+            </a>
+          </div>
+
+          <!-- Allergies & Risk Flags Card -->
+          <div class="bg-surface-container-lowest p-unit-md rounded-[20px] border border-outline-variant/30 card-shadow flex flex-col justify-between">
+            <div class="flex justify-between items-start mb-2">
+              <p class="text-on-surface-variant font-label-md text-label-md">Allergies &amp; Risk Flags</p>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase {% if ai_summary.has_allergies or ai_summary.abnormal_count > 0 %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
+                {% if ai_summary.has_allergies or ai_summary.abnormal_count > 0 %}Warning Flag{% else %}Clear Flags{% endif %}
+              </span>
+            </div>
+            <div class="space-y-1.5 text-[11px]">
+              {% if ai_summary.allergy_medicine %}
+              <p class="text-red-700 font-bold flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">pill</span> Rx: {{ ai_summary.allergy_medicine }}
+              </p>
+              {% endif %}
+              {% if ai_summary.allergy_food %}
+              <p class="text-amber-800 font-medium flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">restaurant</span> Food: {{ ai_summary.allergy_food }}
+              </p>
+              {% endif %}
+              {% if not ai_summary.has_allergies %}
+              <p class="text-green-700 font-medium flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">check_circle</span> Zero documented allergies
+              </p>
+              {% endif %}
+              <p class="text-on-surface-variant mt-1">
+                Document Out-of-Range Flags: <strong>{{ ai_summary.abnormal_count|default:"0" }} Record(s)</strong>
+              </p>
+            </div>
+            <a href="{% url 'ai_analyser' %}" class="mt-3 text-primary text-[11px] font-bold hover:underline flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">qr_code_2</span> View Emergency QR Card
+            </a>
+          </div>
+        </section>
+        <!-- Charts & Appointments Bento -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+          <!-- Important Patient Details & Executive AI Summary Card -->
+          <div class="lg:col-span-2 bg-surface-container-lowest p-unit-lg rounded-[20px] border border-outline-variant/30 card-shadow flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-[24px]">badge</span>
+                  Important Profile Details &amp; AI Summary
+                </h3>
+                <span class="bg-blue-50 text-blue-700 text-[11px] font-extrabold uppercase px-3 py-1 rounded-full border border-blue-200">
+                  {{ ai_summary.patient_code|default:"Verified Vault" }}
+                </span>
+              </div>
+
+              <!-- Important Details Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-xs">
+                <div class="p-3 bg-red-50/70 rounded-xl border border-red-100 flex items-center justify-between">
+                  <div>
+                    <span class="text-red-900 font-bold block text-[10px] uppercase">Emergency Contact</span>
+                    <span class="font-extrabold text-slate-900 text-xs">{{ ai_summary.emergency_contact|default:"Not Logged" }}</span>
+                  </div>
+                  <a href="tel:{{ ai_summary.emergency_phone }}" class="text-red-700 font-extrabold text-xs hover:underline bg-red-100 px-2 py-1 rounded">
+                    {{ ai_summary.emergency_phone|default:"Call" }}
+                  </a>
+                </div>
+
+                <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-100 flex items-center justify-between">
+                  <div>
+                    <span class="text-blue-900 font-bold block text-[10px] uppercase">Primary Doctor</span>
+                    <span class="font-extrabold text-slate-900 text-xs">{{ ai_summary.doctor_name|default:"General Practitioner" }}</span>
+                  </div>
+                  <span class="text-blue-800 text-[11px] font-semibold">{{ ai_summary.doctor_hospital|default:"MediSphere Partner" }}</span>
+                </div>
+              </div>
+
+              <!-- Executive AI Summary Paragraph -->
+              <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <span class="text-slate-500 font-bold block text-[10px] uppercase mb-1 flex items-center gap-1">
+                  <span class="material-symbols-outlined text-primary text-[14px]">psychology</span> Executive AI Clinical Synthesis
+                </span>
+                <p class="text-slate-700 text-xs leading-relaxed font-medium">
+                  {{ ai_summary.general_summary|default:"Baseline profile indicates healthy physiological status with zero critical flags." }}
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <span class="text-[11px] text-slate-500">Patient: <strong>{{ ai_summary.name }}</strong> (Age {{ ai_summary.age }}, Blood Group: <strong class="text-red-600">{{ ai_summary.blood_group }}</strong>)</span>
+              <a href="{% url 'ai_analyser' %}" class="py-2 px-5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all text-center shadow-sm">
+                Open Full AI Analyzer Page &rarr;
+              </a>
+            </div>
+          </div>
+          <!-- Upcoming Appointments -->
+          <div
+            class="bg-surface-container-lowest p-unit-lg rounded-[20px] border border-outline-variant/30 card-shadow"
+          >
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="font-headline-md text-headline-md text-on-surface">
+                Upcoming
+              </h3>
+              <a
+                href="{% url 'user_appointments' %}"
+                class="text-[11px] font-bold text-primary hover:underline"
+                >View All</a
+              >
+            </div>
+            <div class="space-y-4">
+              {% if upcoming_appointments or upcoming_orders or upcoming_prescriptions %}
+
+              <!-- Lab Appointments -->
+              {% for appt in upcoming_appointments %}
+              <div
+                class="p-4 rounded-2xl bg-primary-container/5 border border-primary/10 space-y-3"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary flex-shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[20px]"
+                      >biotech</span
+                    >
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <h4
+                      class="font-label-md text-label-md font-bold text-on-surface truncate"
+                    >
+                      {{ appt.lab_test.name }}
+                    </h4>
+                    <p class="text-[11px] text-on-surface-variant truncate">
+                      Lab: {{
+                      appt.laboratory.business_name|default:appt.laboratory.user.get_full_name
+                      }}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  class="flex items-center justify-between text-[11px] text-on-surface-variant pt-2 border-t border-outline-variant/10"
+                >
+                  <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]"
+                      >calendar_today</span
+                    >
+                    {{ appt.appointment_date }}
+                  </div>
+                  {% if appt.appointment_time %}
+                  <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]"
+                      >schedule</span
+                    >
+                    {{ appt.appointment_time }}
+                  </div>
+                  {% endif %}
+                </div>
+                <a
+                  href="{% url 'user_appointments' %}"
+                  class="block text-center py-1.5 text-primary font-bold text-[11px] hover:bg-primary/5 rounded-lg border border-primary/10 transition-colors"
+                >
+                  Manage Booking
+                </a>
+              </div>
+              {% endfor %}
+
+              <!-- Medicine Orders -->
+              {% for order in upcoming_orders %}
+              <div
+                class="p-4 rounded-2xl bg-secondary-container/5 border border-secondary/15 space-y-3"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary flex-shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[20px]"
+                      >shopping_cart</span
+                    >
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <h4
+                      class="font-label-md text-label-md font-bold text-on-surface truncate"
+                    >
+                      {{ order.medicine.name }} (Qty: {{ order.quantity }})
+                    </h4>
+                    <p class="text-[11px] text-on-surface-variant truncate">
+                      Store: {{
+                      order.pharmacy.business_name|default:order.pharmacy.user.get_full_name
+                      }}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  class="flex items-center justify-between text-[11px] text-on-surface-variant pt-2 border-t border-outline-variant/10"
+                >
+                  <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]"
+                      >payments</span
+                    >
+                    ₹{{ order.total_price }}
+                  </div>
+                  <span
+                    class="px-2 py-0.5 rounded text-[9px] font-bold uppercase {% if order.status == 'pending' %}bg-orange-100 text-orange-500{% elif order.status == 'confirmed' %}bg-green-100 text-green-600{% else %}bg-primary/10 text-primary{% endif %}"
+                  >
+                    {{ order.get_status_display }}
+                  </span>
+                </div>
+                <a
+                  href="{% url 'user_appointments' %}"
+                  class="block text-center py-1.5 text-secondary font-bold text-[11px] hover:bg-secondary/5 rounded-lg border border-secondary/10 transition-colors"
+                >
+                  Manage Order
+                </a>
+              </div>
+              {% endfor %}
+
+              <!-- Prescription Uploads -->
+              {% for pres in upcoming_prescriptions %}
+              <div
+                class="p-4 rounded-2xl bg-orange-50 border border-orange-200/50 space-y-3"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center flex-shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[20px]"
+                      >description</span
+                    >
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <h4
+                      class="font-label-md text-label-md font-bold text-on-surface truncate"
+                    >
+                      Prescription Review
+                    </h4>
+                    <p class="text-[11px] text-on-surface-variant truncate">
+                      Store: {{
+                      pres.pharmacy.business_name|default:pres.pharmacy.user.get_full_name
+                      }}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  class="flex items-center justify-between text-[11px] text-on-surface-variant pt-2 border-t border-outline-variant/10"
+                >
+                  <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]"
+                      >calendar_today</span
+                    >
+                    {{ pres.created_at|date:"M d, Y" }}
+                  </div>
+                  <span
+                    class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-orange-100 text-orange-600"
+                  >
+                    {{ pres.get_status_display }}
+                  </span>
+                </div>
+                <a
+                  href="{% url 'user_appointments' %}"
+                  class="block text-center py-1.5 text-orange-600 font-bold text-[11px] hover:bg-orange-100/50 rounded-lg border border-orange-200/55 transition-colors"
+                >
+                  Manage Prescription
+                </a>
+              </div>
+              {% endfor %} {% else %}
+              <div class="text-center py-10 text-on-surface-variant">
+                <span
+                  class="material-symbols-outlined text-[36px] text-outline-variant"
+                  >event_busy</span
+                >
+                <p class="text-xs mt-2 text-outline">No upcoming bookings</p>
+                <div class="mt-3 flex justify-center gap-4 text-xs font-bold">
+                  <a
+                    href="{% url 'user_lab' %}"
+                    class="text-primary hover:underline"
+                    >Book Test</a
+                  >
+                  <span class="text-outline-variant">|</span>
+                  <a
+                    href="{% url 'user_pharmacy' %}"
+                    class="text-secondary hover:underline"
+                    >Buy Medicine</a
+                  >
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          <!-- Quick Actions Grid -->
+          <div
+            class="lg:col-span-2 bg-transparent grid grid-cols-1 md:grid-cols-3 gap-gutter"
+          >
+            <a
+              href="{% url 'upload_document' %}"
+              class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-3"
+            >
+              <div
+                class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-primary"
+              >
+                <span class="material-symbols-outlined" data-icon="upload_file"
+                  >upload_file</span
+                >
+              </div>
+              <span class="font-bold text-sm text-slate-800"
+                >Upload Report</span
+              >
+            </a>
+            <a
+              href="{% url 'ai_analyser' %}"
+              class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-3"
+            >
+              <div
+                class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-700"
+              >
+                <span class="material-symbols-outlined" data-icon="analytics"
+                  >analytics</span
+                >
+              </div>
+              <span class="font-bold text-sm text-slate-800"
+                >Report Analyzer</span
+              >
+            </a>
+            <button
+              class="bg-red-50 p-4 rounded-xl border border-red-200 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-3"
+            >
+              <div
+                class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600"
+              >
+                <span
+                  class="material-symbols-outlined"
+                  data-icon="emergency_share"
+                  >emergency_share</span
+                >
+              </div>
+              <span class="font-bold text-sm text-red-600">Request SOS</span>
+            </button>
+          </div>
+        </section>
+      </div>
+      <!-- Footer Shell -->
+      <footer class="w-full py-8 border-t border-slate-200 mt-auto bg-white">
+        <div
+          class="max-w-container-max-width mx-auto px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-4"
+        >
+          <div class="flex flex-col items-center md:items-start">
+            <span
+              class="text-lg font-bold text-primary flex items-center gap-1.5"
+              >MediSphere</span
+            >
+            <p class="text-xs text-slate-500 mt-1 text-center md:text-left">
+              &copy; 2026 MediSphere. All rights reserved.
+            </p>
+          </div>
+          <div class="flex gap-6 text-xs text-slate-500">
+            <a class="hover:text-primary transition-colors" href="#"
+              >Privacy Policy</a
+            >
+            <a class="hover:text-primary transition-colors" href="#"
+              >Terms of Service</a
+            >
+            <a class="hover:text-primary transition-colors" href="#"
+              >Contact Us</a
+            >
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      // Simple micro-interaction for active nav states and UI updates
+      document.querySelectorAll("nav a").forEach((link) => {
+        link.addEventListener("click", (e) => {
+          if (link.textContent.trim() !== "Dashboard") {
+            // Logic for switching tabs would go here
+          }
+        });
+      });
+
+      // Initialize progress ring for health score
+      const circle = document.querySelector(".progress-ring__circle");
+      const radius = circle.r.baseVal.value;
+      const circumference = radius * 2 * Math.PI;
+      circle.style.strokeDasharray = `${circumference} ${circumference}`;
+
+      function setProgress(percent) {
+        const offset = circumference - (percent / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
+      }
+
+      // Initial animation
+      setTimeout(() => setProgress(84), 500);
+
+      // ── Notification Panel ──
+      function toggleNotifPanel() {
+        const panel = document.getElementById("notifPanel");
+        panel.classList.toggle("hidden");
+      }
+      document.addEventListener("click", function (e) {
+        const wrapper = document.getElementById("notifWrapper");
+        const panel = document.getElementById("notifPanel");
+        if (wrapper && panel && !wrapper.contains(e.target)) {
+          panel.classList.add("hidden");
+        }
+      });
+
+      // ── Live Search ──
+      (function () {
+        const input = document.getElementById("dashboardSearchInput");
+        const dropdown = document.getElementById("searchDropdown");
+        const results = document.getElementById("searchResults");
+        const emptyMsg = document.getElementById("searchEmpty");
+        const spinner = document.getElementById("searchSpinner");
+        const SEARCH_URL = "/search/";
+        let debounceTimer;
+
+        const CATEGORY_COLORS = {
+          "Blood Test": "bg-red-100 text-red-600",
+          "Urine Test": "bg-yellow-100 text-yellow-600",
+          "X-Ray": "bg-blue-100 text-blue-600",
+          MRI: "bg-purple-100 text-purple-600",
+          "CT Scan": "bg-indigo-100 text-indigo-600",
+          Ultrasound: "bg-green-100 text-green-600",
+          ECG: "bg-pink-100 text-pink-600",
+        };
+        function catClass(c) {
+          return CATEGORY_COLORS[c] || "bg-surface-container text-outline";
+        }
+
+        function getCsrf() {
+          return (
+            document.cookie
+              .split(";")
+              .map((c) => c.trim())
+              .find((c) => c.startsWith("csrftoken="))
+              ?.split("=")[1] || ""
+          );
+        }
+
+        function closeDropdown() {
+          dropdown.classList.add("hidden");
+        }
+        function openDropdown() {
+          dropdown.classList.remove("hidden");
+        }
+
+        function renderResults(data) {
+          results.innerHTML = "";
+          emptyMsg.classList.add("hidden");
+          const total = data.medicines.length + data.lab_tests.length;
+
+          if (total === 0) {
+            emptyMsg.classList.remove("hidden");
+            openDropdown();
+            return;
+          }
+
+          // ── Pharmacy / Medicines ──
+          if (data.medicines.length > 0) {
+            const header = document.createElement("div");
+            header.className = "flex items-center gap-2 px-4 pt-4 pb-2";
+            header.innerHTML = `
+              <span class="material-symbols-outlined text-[16px] text-on-surface-variant">medical_services</span>
+              <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Pharmacy & Medicines</span>`;
+            results.appendChild(header);
+
+            data.medicines.forEach((m) => {
+              const item = document.createElement("a");
+              item.href = `/pharmacy/?store=${m.pharmacy_id}&q=${encodeURIComponent(m.name)}`;
+              item.className =
+                "flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low transition-colors border-b border-outline-variant/10 cursor-pointer";
+              item.innerHTML = `
+                <span class="flex-shrink-0 w-8 h-8 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center">
+                  <span class="material-symbols-outlined text-[17px]">medication</span>
+                </span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[13px] font-bold text-on-surface truncate">${m.name}</p>
+                  <p class="text-[11px] text-on-surface-variant">${m.pharmacy}</p>
+                </div>
+                <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span class="text-[13px] font-black text-primary">₹${m.price}</span>
+                  <div class="flex gap-1">
+                    ${m.home_delivery ? '<span class="text-[9px] bg-green-100 text-green-600 font-bold px-1.5 py-0.5 rounded">HOME</span>' : ""}
+                    ${m.in_stock ? '<span class="text-[9px] bg-secondary/10 text-secondary font-bold px-1.5 py-0.5 rounded">IN STOCK</span>' : ""}
+                  </div>
+                </div>`;
+              results.appendChild(item);
+            });
+          }
+
+          // ── Lab Tests ──
+          if (data.lab_tests.length > 0) {
+            const header = document.createElement("div");
+            header.className = "flex items-center gap-2 px-4 pt-4 pb-2";
+            header.innerHTML = `
+              <span class="material-symbols-outlined text-[16px] text-on-surface-variant">biotech</span>
+              <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Lab Tests & Diagnostics</span>`;
+            results.appendChild(header);
+
+            data.lab_tests.forEach((t) => {
+              const item = document.createElement("a");
+              item.href = `/lab/?lab=${t.lab_id}&q=${encodeURIComponent(t.name)}`;
+              item.className =
+                "flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low transition-colors border-b border-outline-variant/10 cursor-pointer";
+              item.innerHTML = `
+                <span class="flex-shrink-0 w-8 h-8 bg-primary/5 text-primary rounded-xl flex items-center justify-center">
+                  <span class="material-symbols-outlined text-[17px]">biotech</span>
+                </span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[13px] font-bold text-on-surface truncate">${t.name}</p>
+                  <p class="text-[11px] text-on-surface-variant">${t.lab}</p>
+                </div>
+                <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span class="text-[13px] font-black text-primary">₹${t.price}</span>
+                  <div class="flex gap-1">
+                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${catClass(t.category)}">${t.category}</span>
+                    ${t.home_collection ? '<span class="text-[9px] bg-green-100 text-green-600 font-bold px-1.5 py-0.5 rounded">HOME</span>' : ""}
+                  </div>
+                </div>`;
+              results.appendChild(item);
+            });
+          }
+
+          openDropdown();
+        }
+
+        input.addEventListener("input", function () {
+          clearTimeout(debounceTimer);
+          const q = this.value.trim();
+          if (q.length < 2) {
+            closeDropdown();
+            return;
+          }
+
+          spinner.classList.remove("hidden");
+          debounceTimer = setTimeout(() => {
+            fetch(`${SEARCH_URL}?q=${encodeURIComponent(q)}`, {
+              headers: { "X-Requested-With": "XMLHttpRequest" },
+            })
+              .then((r) => r.json())
+              .then((data) => {
+                spinner.classList.add("hidden");
+                renderResults(data);
+              })
+              .catch(() => spinner.classList.add("hidden"));
+          }, 280);
+        });
+
+        // Close on outside click
+        document.addEventListener("click", (e) => {
+          const wrapper = document.getElementById("searchWrapper");
+          if (!wrapper.contains(e.target)) closeDropdown();
+        });
+
+        // Reopen on focus if there's a value
+        input.addEventListener("focus", function () {
+          if (this.value.trim().length >= 2 && results.innerHTML)
+            openDropdown();
+        });
+
+        // ESC to close
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            closeDropdown();
+            input.blur();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

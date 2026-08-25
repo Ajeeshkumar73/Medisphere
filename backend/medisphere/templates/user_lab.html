@@ -1,0 +1,727 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Lab Tests | MediSphere</title>
+    {% include 'tailwind_setup.html' %}
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: #f8fafc;
+        -webkit-font-smoothing: antialiased;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+        vertical-align: middle;
+        display: inline-block;
+        line-height: 1;
+      }
+      .glass-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .field-input {
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+        background: #fff;
+      }
+      .field-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .cat-tab {
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1.5px solid transparent;
+      }
+      .cat-tab.active {
+        background: #2563eb;
+        color: white;
+      }
+      .cat-tab:not(.active) {
+        background: white;
+        color: #475569;
+        border-color: #cbd5e1;
+      }
+      .cat-tab:not(.active):hover {
+        border-color: #2563eb;
+        color: #2563eb;
+      }
+      .cat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex">
+    <!-- SIDEBAR -->
+    <aside
+      class="h-screen sticky top-0 w-64 flex-col bg-white border-r border-slate-200 hidden md:flex p-4 gap-2 z-50"
+    >
+      <div class="mb-6 px-2">
+        <a href="{% url 'landing_page' %}" class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-primary">MediSphere</h1>
+        </a>
+        <p
+          class="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1"
+        >
+          Patient Portal
+        </p>
+      </div>
+      <nav class="flex-1 space-y-1">
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_dashboard' %}"
+        >
+          <span class="material-symbols-outlined">dashboard</span
+          ><span class="text-sm font-medium">Dashboard</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_profile' %}"
+        >
+          <span class="material-symbols-outlined">manage_accounts</span
+          ><span class="text-sm font-medium">My Profile</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'medical_reports' %}"
+        >
+          <span class="material-symbols-outlined">folder_shared</span
+          ><span class="text-sm font-medium">Medical Records</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_appointments' %}"
+        >
+          <span class="material-symbols-outlined">calendar_month</span>
+          <span class="text-sm font-medium">Appointments & Orders</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 bg-primary text-white font-semibold rounded-lg"
+          href="{% url 'user_lab' %}"
+        >
+          <span class="material-symbols-outlined">biotech</span
+          ><span class="text-sm font-medium">Laboratory</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_pharmacy' %}"
+        >
+          <span class="material-symbols-outlined">medical_services</span
+          ><span class="text-sm font-medium">Pharmacy</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'expenses' %}"
+        >
+          <span class="material-symbols-outlined">payments</span>
+          <span class="text-sm font-medium">Expenses</span>
+        </a>
+      </nav>
+      <div class="mt-auto pt-4 border-t border-slate-200">
+        <a
+          class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+          href="{% url 'logout' %}"
+        >
+          <span class="material-symbols-outlined">logout</span
+          ><span class="text-sm font-medium">Sign Out</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <!-- Top bar -->
+      <header
+        class="sticky top-0 bg-white border-b border-slate-200 flex items-center justify-between px-10 h-16 z-40"
+      >
+        <div class="flex items-center gap-3">
+          {% if selected_lab %}
+          <a
+            href="{% url 'user_lab' %}"
+            class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors text-sm"
+          >
+            <span class="material-symbols-outlined text-[18px]"
+              >arrow_back</span
+            >
+            Labs
+          </a>
+          <span class="material-symbols-outlined text-outline text-[16px]"
+            >chevron_right</span
+          >
+          <span class="font-bold text-sm text-on-surface"
+            >{{ selected_lab.business_name }}</span
+          >
+          {% else %}
+          <span class="font-bold text-2xl text-on-surface"
+            >Lab Tests & Diagnostics</span
+          >
+          {% endif %}
+        </div>
+        <div class="flex items-center gap-3">
+           <div
+            class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-label-md"
+          >
+            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          </div>
+          <div class="hidden sm:block text-right">
+              <p class="font-label-md text-label-md font-bold text-on-surface">
+                {{ user.get_full_name|default:user.username }}
+              </p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">
+                {% if profile %}{{ profile.get_role_display }}{% else %}Member{% endif %}
+              </p>
+          </div>
+        </div>
+      </header>
+
+      <div class="p-10 max-w-7xl w-full mx-auto space-y-6 animate-fade-up">
+        <!-- Messages -->
+        {% if messages %}{% for message in messages %}
+        <div
+          class="px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-error-container text-error{% else %}bg-secondary-container/20 text-on-secondary-container{% endif %} text-sm flex items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>{{ message }}
+        </div>
+        {% endfor %}{% endif %} {% if not selected_lab %}
+        <!-- ── LAB LIST ── -->
+        <div class="mb-6">
+          <h2 class="text-3xl font-bold text-on-surface">
+            Registered Laboratories
+          </h2>
+          <p class="text-base text-on-surface-variant">
+            Select a laboratory to view available tests, book appointments, and
+            more.
+          </p>
+        </div>
+
+        {% if laboratories %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {% for lab in laboratories %}
+          <div
+            class="glass-card rounded-[20px] p-6 flex flex-col justify-between hover:border-primary/40 transition-all"
+          >
+            <div>
+              {% if lab.business_image %}
+              <div
+                class="w-full h-36 rounded-2xl border border-outline-variant/20 overflow-hidden mb-4 bg-white"
+              >
+                <img
+                  src="{{ lab.business_image.url }}"
+                  alt="{{ lab.business_name }}"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              {% else %}
+              <div
+                class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-4"
+              >
+                <span class="material-symbols-outlined text-[28px]"
+                  >biotech</span
+                >
+              </div>
+              {% endif %}
+              <h3 class="font-bold text-2xl text-on-surface mb-1">
+                {{ lab.business_name|default:lab.user.get_full_name }}
+              </h3>
+              <p class="text-xs text-outline mb-4">
+                License: {{ lab.license_number|default:"Verified Partner" }}
+              </p>
+              {% if lab.phone %}
+              <p
+                class="text-sm text-on-surface-variant flex items-center gap-1.5 mb-1"
+              >
+                <span class="material-symbols-outlined text-[16px]">phone</span
+                >{{ lab.phone }}
+              </p>
+              {% endif %} {% if lab.address %}
+              <p
+                class="text-xs text-on-surface-variant flex items-center gap-1.5 mb-4"
+              >
+                <span class="material-symbols-outlined text-[16px]"
+                  >location_on</span
+                >{{ lab.address }}
+              </p>
+              {% endif %}
+              <p class="text-xs text-on-surface-variant">
+                <strong>{{ lab.lab_tests.all.count }}</strong> tests available
+              </p>
+            </div>
+            <a
+              href="?lab={{ lab.id }}"
+              class="mt-4 w-full bg-primary text-white text-center font-bold text-sm py-3 rounded-xl hover:bg-primary/95 transition-all shadow-md block"
+            >
+              Visit Lab
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div
+          class="text-center py-20 bg-white border border-outline-variant/30 rounded-[20px]"
+        >
+          <span
+            class="material-symbols-outlined text-[64px] text-outline-variant"
+            >science_off</span
+          >
+          <p class="text-2xl font-bold mt-4 text-on-surface">
+            No registered laboratories yet.
+          </p>
+        </div>
+        {% endif %} {% else %}
+        <!-- ── SELECTED LAB VIEW ── -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left: Tests list (span 2) -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Lab header -->
+            <div class="glass-card rounded-[20px] p-6 md:p-8 space-y-6">
+              <div
+                class="flex flex-col md:flex-row justify-between items-start md:items-center gap-5"
+              >
+                <div class="flex items-center gap-4">
+                  {% if selected_lab.business_image %}
+                  <div
+                    class="w-16 h-16 rounded-2xl border border-outline-variant/30 overflow-hidden bg-white flex-shrink-0"
+                  >
+                    <img
+                      src="{{ selected_lab.business_image.url }}"
+                      alt="{{ selected_lab.business_name }}"
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                  {% else %}
+                  <div
+                    class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary flex-shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[32px]"
+                      >biotech</span
+                    >
+                  </div>
+                  {% endif %}
+                  <div>
+                    <h2 class="text-2xl font-extrabold text-on-surface">
+                      {{ selected_lab.business_name }}
+                    </h2>
+                    <p class="text-xs text-outline">
+                      License: {{ selected_lab.license_number|default:"Verified"
+                      }}
+                    </p>
+                    <p class="text-sm text-on-surface-variant mt-1">
+                      {{ selected_lab.address|default:"Online Lab" }}
+                    </p>
+                  </div>
+                </div>
+                {% if selected_lab.phone %}
+                <a
+                  href="tel:{{ selected_lab.phone }}"
+                  class="bg-secondary/10 text-secondary px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-1.5 hover:bg-secondary/20 transition-all flex-shrink-0"
+                >
+                  <span class="material-symbols-outlined text-[18px]"
+                    >call</span
+                  >
+                  {{ selected_lab.phone }}
+                </a>
+                {% endif %}
+              </div>
+              {% if selected_lab.other_info %}
+              <div
+                class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/20 text-xs text-on-surface-variant leading-relaxed"
+              >
+                <p class="font-bold text-on-surface mb-1">
+                  About &amp; Timings
+                </p>
+                {{ selected_lab.other_info|linebreaksbr }}
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Search + category tabs -->
+            <div class="glass-card rounded-[20px] p-6 md:p-8">
+              <form
+                method="GET"
+                action="{% url 'user_lab' %}"
+                class="mb-4 flex gap-3 flex-wrap"
+              >
+                <input type="hidden" name="lab" value="{{ selected_lab.id }}" />
+                <input
+                  class="field-input flex-1 min-w-[200px]"
+                  name="q"
+                  placeholder="Search tests by name…"
+                  type="text"
+                  value="{{ search_q }}"
+                />
+                <button
+                  type="submit"
+                  class="bg-primary text-white px-6 rounded-xl hover:bg-primary/95 font-bold text-sm shadow-md transition-colors"
+                >
+                  Search
+                </button>
+                {% if search_q or category_filter %}<a
+                  href="?lab={{ selected_lab.id }}"
+                  class="flex items-center px-4 rounded-xl border border-outline-variant hover:bg-error/5 text-error text-sm"
+                  >Reset</a
+                >{% endif %}
+              </form>
+
+              <!-- Category filter tabs -->
+              <div class="flex flex-wrap gap-2 mb-6">
+                <a
+                  href="?lab={{ selected_lab.id }}{% if search_q %}&q={{ search_q }}{% endif %}"
+                  class="cat-tab {% if not category_filter %}active{% endif %}"
+                  >All</a
+                >
+                {% for val, label in category_choices %}
+                <a
+                  href="?lab={{ selected_lab.id }}&category={{ val }}{% if search_q %}&q={{ search_q }}{% endif %}"
+                  class="cat-tab {% if category_filter == val %}active{% endif %}"
+                  >{{ label }}</a
+                >
+                {% endfor %}
+              </div>
+
+              {% if lab_tests %}
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for test in lab_tests %}
+                <div
+                  class="p-5 border border-outline-variant/30 rounded-2xl bg-surface-container-low hover:border-primary/30 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="font-bold text-base text-on-surface">
+                        {{ test.name }}
+                      </h4>
+                      <span class="text-primary font-black text-2xl"
+                        >₹{{ test.price }}</span
+                      >
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                      <span
+                        class="cat-badge {% if test.category == 'blood_test' %}bg-red-100 text-red-600 {% elif test.category == 'urine_test' %}bg-yellow-100 text-yellow-600 {% elif test.category == 'xray' %}bg-blue-100 text-blue-600 {% elif test.category == 'mri' %}bg-purple-100 text-purple-600 {% elif test.category == 'ct_scan' %}bg-indigo-100 text-indigo-600 {% elif test.category == 'ultrasound' %}bg-green-100 text-green-600 {% elif test.category == 'ecg' %}bg-pink-100 text-pink-600 {% else %}bg-surface-container text-outline{% endif %}"
+                      >
+                        {{ test.get_category_display }}
+                      </span>
+                      {% if test.turnaround_hours %}<span
+                        class="cat-badge bg-surface-container text-on-surface-variant"
+                        ><span class="material-symbols-outlined text-[10px]"
+                          >schedule</span
+                        >{{ test.turnaround_hours }}h</span
+                      >{% endif %} {% if test.is_home_sample_collection %}<span
+                        class="cat-badge bg-green-100 text-green-600"
+                        ><span class="material-symbols-outlined text-[10px]"
+                          >home_health</span
+                        >Home</span
+                      >{% endif %}
+                    </div>
+                    {% if test.description %}
+                    <p class="text-xs text-on-surface-variant mb-3">
+                      {{ test.description }}
+                    </p>
+                    {% endif %}
+                  </div>
+                  <button
+                    onclick="openBookModal('{{ test.id }}', '{{ test.name }}', '{{ test.price }}', {{ test.is_home_sample_collection|yesno:'true,false' }})"
+                    class="w-full bg-primary text-white font-bold text-sm py-2.5 rounded-xl hover:bg-primary/95 transition-all shadow-md flex items-center justify-center gap-1 mt-2"
+                  >
+                    <span class="material-symbols-outlined text-[16px]"
+                      >event_available</span
+                    >
+                    Book Appointment
+                  </button>
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="text-center py-12 text-on-surface-variant">
+                <span
+                  class="material-symbols-outlined text-[48px] text-outline-variant"
+                  >biotech</span
+                >
+                <p class="text-sm mt-3">No tests matched your query.</p>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Right: Appointments sidebar -->
+          <div class="space-y-6">
+            <div class="glass-card rounded-[20px] p-6">
+              <h3 class="font-bold text-2xl text-on-surface mb-1">
+                My Appointments
+              </h3>
+              <p class="text-xs text-on-surface-variant mb-5">
+                Your bookings at this lab
+              </p>
+
+              {% if user_appointments %}
+              <div class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                {% for appt in user_appointments %}
+                <div
+                  class="p-3 border border-outline-variant/20 rounded-xl bg-surface-container-low/50"
+                >
+                  <div class="flex justify-between items-start mb-1.5">
+                    <h4
+                      class="font-bold text-xs text-on-surface truncate max-w-[150px]"
+                    >
+                      {{ appt.lab_test.name }}
+                    </h4>
+                    <span
+                      class="px-2 py-0.5 rounded text-[9px] font-bold uppercase {% if appt.status == 'pending' %}bg-orange-100 text-orange-500 {% elif appt.status == 'confirmed' %}bg-secondary-container/20 text-on-secondary-container {% elif appt.status == 'sample_collected' %}bg-primary/10 text-primary {% elif appt.status == 'report_ready' %}bg-green-100 text-green-600 {% else %}bg-error/10 text-error{% endif %}"
+                    >
+                      {{ appt.get_status_display }}
+                    </span>
+                  </div>
+                  <p class="text-[10px] text-on-surface-variant">
+                    {{ appt.appointment_date }}{% if appt.appointment_time %} at
+                    {{ appt.appointment_time }}{% endif %}
+                  </p>
+                  {% if appt.is_home_collection %}<span
+                    class="text-[9px] font-bold bg-green-100 text-green-600 px-1.5 py-0.5 rounded mt-1 inline-block"
+                    >HOME COLLECTION</span
+                  >{% endif %}
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <p class="text-center py-8 text-xs text-outline">
+                No appointments booked yet.
+              </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <footer
+          class="py-6 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500"
+        >
+          <span class="font-bold text-slate-800">MediSphere</span>
+          <span>&copy; 2026 MediSphere. All rights reserved.</span>
+        </footer>
+      </div>
+    </main>
+
+    <!-- BOOK APPOINTMENT MODAL -->
+    <div class="modal-backdrop" id="bookModal">
+      <div
+        class="bg-white rounded-[24px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-fade-up"
+      >
+        <div
+          class="flex items-center justify-between px-8 py-5 border-b border-outline-variant/30"
+        >
+          <h3 class="font-bold text-2xl text-on-surface">Book Appointment</h3>
+          <button
+            onclick="closeBookModal()"
+            class="p-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-all"
+            type="button"
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <form
+          method="POST"
+          action="{% url 'book_appointment' %}"
+          class="p-8 space-y-4"
+          id="bookForm"
+        >
+          {% csrf_token %}
+          <input type="hidden" name="test_id" id="book-test-id" />
+          <input
+            type="hidden"
+            name="lab_id"
+            value="{% if selected_lab %}{{ selected_lab.id }}{% endif %}"
+          />
+
+          <div>
+            <label class="text-xs text-on-surface-variant">Selected Test</label>
+            <input
+              class="field-input font-bold"
+              id="book-test-name"
+              readonly
+              type="text"
+            />
+          </div>
+
+          <div>
+            <label class="text-xs text-on-surface-variant">Price (INR)</label>
+            <input
+              class="field-input text-primary font-bold"
+              id="book-test-price"
+              readonly
+              type="text"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="text-xs text-on-surface-variant"
+                >Appointment Date <span class="text-error">*</span></label
+              >
+              <input
+                class="field-input"
+                name="appointment_date"
+                type="date"
+                required
+              />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs text-on-surface-variant"
+                >Preferred Time (optional)</label
+              >
+              <input class="field-input" name="appointment_time" type="time" />
+            </div>
+          </div>
+
+          <div id="homeCollectionSection">
+            <label class="flex items-center gap-3 cursor-pointer py-1">
+              <input
+                type="checkbox"
+                name="is_home_collection"
+                id="homeCheckbox"
+                class="w-4 h-4 rounded border-outline-variant text-primary"
+                onchange="toggleAddress(this)"
+              />
+              <span class="text-sm text-on-surface-variant" id="homeLabel"
+                >Request Home Sample Collection</span
+              >
+            </label>
+            <div id="addressField" class="hidden mt-2 space-y-1.5">
+              <label class="text-xs text-on-surface-variant"
+                >Collection Address <span class="text-error">*</span></label
+              >
+              <textarea
+                class="field-input resize-none"
+                name="collection_address"
+                placeholder="Enter your full address for home collection…"
+                rows="2"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs text-on-surface-variant"
+              >Notes (optional)</label
+            >
+            <textarea
+              class="field-input resize-none"
+              name="notes"
+              placeholder="Any special instructions or health notes…"
+              rows="2"
+            ></textarea>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button
+              type="submit"
+              class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary/95 transition-all shadow-md"
+            >
+              Confirm Booking
+            </button>
+            <button
+              type="button"
+              onclick="closeBookModal()"
+              class="flex-1 border border-outline-variant text-on-surface-variant py-3 rounded-xl text-sm hover:bg-surface-container transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const bookModal = document.getElementById("bookModal");
+      let homeCollectionAvailable = false;
+
+      function openBookModal(testId, testName, testPrice, homeAvailable) {
+        document.getElementById("book-test-id").value = testId;
+        document.getElementById("book-test-name").value = testName;
+        document.getElementById("book-test-price").value = "₹" + testPrice;
+        homeCollectionAvailable = homeAvailable;
+
+        const homeSection = document.getElementById("homeCollectionSection");
+        const homeLabel = document.getElementById("homeLabel");
+        const homeCheckbox = document.getElementById("homeCheckbox");
+        homeCheckbox.checked = false;
+        document.getElementById("addressField").classList.add("hidden");
+
+        if (homeAvailable) {
+          homeSection.classList.remove("opacity-50", "pointer-events-none");
+          homeLabel.textContent = "Request Home Sample Collection";
+        } else {
+          homeSection.classList.add("opacity-50", "pointer-events-none");
+          homeLabel.textContent =
+            "Home Sample Collection (Not available for this test)";
+        }
+
+        bookModal.classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeBookModal() {
+        bookModal.classList.remove("open");
+        document.body.style.overflow = "";
+      }
+
+      function toggleAddress(checkbox) {
+        const addr = document.getElementById("addressField");
+        if (checkbox.checked) {
+          addr.classList.remove("hidden");
+        } else {
+          addr.classList.add("hidden");
+        }
+      }
+
+      bookModal.addEventListener("click", (e) => {
+        if (e.target === bookModal) closeBookModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeBookModal();
+      });
+    </script>
+  </body>
+</html>

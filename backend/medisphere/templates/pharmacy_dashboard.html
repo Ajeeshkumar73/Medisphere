@@ -1,0 +1,455 @@
+<!doctype html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Pharmacy Dashboard | MediSphere</title>
+  {% include 'tailwind_setup.html' %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Inter", sans-serif; background-color: #f8fafc; -webkit-font-smoothing: antialiased; }
+    .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; vertical-align: middle; display: inline-block; line-height: 1; }
+    .glass-card { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .field-input { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s; background: #fff; }
+    .field-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 100; display: none; align-items: center; justify-content: center; }
+    .modal-backdrop.open { display: flex; }
+  </style>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="h-screen sticky top-0 w-64 flex-col bg-white border-r border-slate-200 hidden md:flex p-4 gap-2 z-50">
+    <div class="mb-6 px-2">
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl font-bold text-primary">MediSphere</h1>
+      </div>
+      <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1">Pharmacy Hub</p>
+    </div>
+    <nav class="flex-1 space-y-1">
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white font-semibold rounded-lg" href="{% url 'pharmacy_dashboard' %}">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-label-md text-label-md">Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_profile' %}">
+        <span class="material-symbols-outlined">storefront</span>
+        <span class="font-label-md text-label-md">Store Profile</span>
+      </a>
+    </nav>
+    <div class="mt-auto pt-4 border-t border-slate-200 space-y-1">
+      <a class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg" href="{% url 'logout' %}">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-label-md text-label-md">Sign Out</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+
+    <!-- Top bar -->
+    <header class="sticky top-0 bg-white border-b border-slate-200 flex items-center justify-between px-margin-desktop h-16 z-40">
+      <div>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Pharmacy Management</h2>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:block text-right">
+          <p class="font-label-md text-label-md font-bold text-on-surface">{{ profile.business_name|default:user.username }}</p>
+          <p class="font-label-sm text-label-sm text-on-surface-variant">License: {{ profile.license_number|default:"N/A" }}</p>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-label-md">
+          {{ profile.business_name|first|upper|default:user.username|first|upper }}
+        </div>
+      </div>
+    </header>
+
+    <div class="p-margin-desktop max-w-7xl w-full mx-auto space-y-gutter animate-fade-up">
+
+      <!-- Django Messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-error-container text-error{% else %}bg-secondary-container/20 text-on-secondary-container{% endif %} font-label-md text-label-md flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Stats Grid -->
+      <section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-[24px]">vaccines</span>
+          </div>
+          <div>
+            <p class="text-label-sm text-on-surface-variant uppercase font-bold">Medicines</p>
+            <p class="text-headline-md text-on-surface font-black">{{ total_medicines }}</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4 border-l-4 border-l-error">
+          <div class="w-12 h-12 bg-error/10 rounded-xl flex items-center justify-center text-error">
+            <span class="material-symbols-outlined text-[24px]">warning</span>
+          </div>
+          <div>
+            <p class="text-label-sm text-on-surface-variant uppercase font-bold">Low Stock</p>
+            <p class="text-headline-md text-error font-black">{{ low_stock_count }}</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
+            <span class="material-symbols-outlined text-[24px]">local_shipping</span>
+          </div>
+          <div>
+            <p class="text-label-sm text-on-surface-variant uppercase font-bold">Pending Orders</p>
+            <p class="text-headline-md text-on-surface font-black">{{ pending_orders }}</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-500">
+            <span class="material-symbols-outlined text-[24px]">description</span>
+          </div>
+          <div>
+            <p class="text-label-sm text-on-surface-variant uppercase font-bold">Pending Prescriptions</p>
+            <p class="text-headline-md text-on-surface font-black">{{ pending_prescriptions }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Columns -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Inventory management column (span 2) -->
+        <div class="lg:col-span-2 space-y-gutter">
+          <div class="glass-card rounded-[20px] p-6 md:p-8">
+            <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+              <div>
+                <h3 class="font-headline-md text-headline-md text-on-surface">Medicine Inventory</h3>
+                <p class="font-label-sm text-label-sm text-on-surface-variant">Manage medicine records and availability</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <button onclick="openBulkImportModal()" class="bg-secondary text-white font-label-md text-label-md px-4 py-2.5 rounded-xl hover:bg-secondary/95 transition-all flex items-center gap-1.5 shadow-md">
+                  <span class="material-symbols-outlined text-[18px]">upload_file</span> Bulk Import
+                </button>
+                <button onclick="openAddMedicineModal()" class="bg-primary text-white font-label-md text-label-md px-4 py-2.5 rounded-xl hover:bg-primary/95 transition-all flex items-center gap-1.5 shadow-md">
+                  <span class="material-symbols-outlined text-[18px]">add_circle</span> Add Medicine
+                </button>
+              </div>
+            </div>
+
+            <!-- Search box -->
+            <form method="GET" action="{% url 'pharmacy_dashboard' %}" class="mb-6 flex gap-3">
+              <input class="field-input flex-1" name="q" placeholder="Search medicines by name or description..." type="text" value="{{ search_q }}">
+              <button type="submit" class="bg-surface-container border border-outline-variant px-6 rounded-xl hover:bg-surface-container-high transition-colors font-bold text-label-md">
+                Search
+              </button>
+              {% if search_q %}
+              <a href="{% url 'pharmacy_dashboard' %}" class="flex items-center justify-center border border-outline-variant px-4 rounded-xl hover:bg-error/5 text-error transition-colors">
+                Reset
+              </a>
+              {% endif %}
+            </form>
+
+            <!-- Table of medicines -->
+            {% if medicines %}
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-outline-variant/30 text-label-sm font-bold text-on-surface-variant">
+                    <th class="pb-3">Medicine Name</th>
+                    <th class="pb-3">Price</th>
+                    <th class="pb-3 text-center">Stock</th>
+                    <th class="pb-3 text-center">Delivery</th>
+                    <th class="pb-3 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for med in medicines %}
+                  <tr class="border-b border-outline-variant/10 text-body-md hover:bg-surface-container-low/30 transition-colors">
+                    <td class="py-3 font-semibold text-on-surface">
+                      {{ med.name }}
+                      {% if med.description %}
+                      <span class="block text-[11px] font-normal text-outline mt-0.5 max-w-xs truncate">{{ med.description }}</span>
+                      {% endif %}
+                    </td>
+                    <td class="py-3 font-semibold text-primary">₹{{ med.price }}</td>
+                    <td class="py-3 text-center font-bold {% if med.stock_quantity <= 5 %}text-error{% else %}text-on-surface-variant{% endif %}">
+                      {{ med.stock_quantity }}
+                      {% if med.stock_quantity <= 5 %}
+                      <span class="block text-[9px] font-bold text-error uppercase mt-0.5">Low Stock</span>
+                      {% endif %}
+                    </td>
+                    <td class="py-3 text-center text-on-surface-variant">
+                      {% if med.is_home_delivery_available %}
+                      <span class="bg-secondary/10 text-secondary text-[11px] px-2 py-0.5 rounded font-bold">Yes</span>
+                      {% else %}
+                      <span class="bg-surface-container text-outline text-[11px] px-2 py-0.5 rounded font-bold">No</span>
+                      {% endif %}
+                    </td>
+                    <td class="py-3 text-center">
+                      <form method="POST" action="{% url 'delete_medicine' med.id %}" onsubmit="return confirm('Remove {{ med.name }} from inventory?')">
+                        {% csrf_token %}
+                        <button type="submit" class="p-1.5 text-outline hover:text-error transition-colors rounded-lg hover:bg-error/5" title="Remove Medicine">
+                          <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12 text-on-surface-variant">
+              <span class="material-symbols-outlined text-[48px] text-outline-variant">vaccines</span>
+              <p class="font-label-md text-label-md mt-3">No medicines in stock.</p>
+              <p class="font-label-sm text-label-sm text-outline">Click "Add Medicine" to register new inventory records.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Orders & Prescription Requests Column -->
+        <div class="space-y-gutter">
+
+          <!-- Prescription uploads panel -->
+          <div class="glass-card rounded-[20px] p-6">
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-1">Prescription Files</h3>
+            <p class="font-label-sm text-label-sm text-on-surface-variant mb-6">Patient uploads to review</p>
+
+            {% if received_prescriptions %}
+            <div class="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+              {% for pres in received_prescriptions %}
+              <div class="p-4 border border-outline-variant/30 rounded-2xl bg-surface-container-low flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-label-sm">
+                      {{ pres.profile.user.first_name|first|upper }}
+                    </span>
+                    <div>
+                      <p class="font-bold text-label-sm text-on-surface">{{ pres.profile.user.get_full_name }}</p>
+                      <p class="text-[10px] text-outline">{{ pres.created_at|timesince }} ago</p>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase
+                    {% if pres.status == 'pending' %}bg-orange-100 text-orange-500
+                    {% elif pres.status == 'reviewed' %}bg-secondary-container/20 text-on-secondary-container
+                    {% elif pres.status == 'filled' %}bg-primary/10 text-primary
+                    {% else %}bg-error/10 text-error{% endif %}">
+                    {{ pres.get_status_display }}
+                  </span>
+                </div>
+                {% if pres.notes %}
+                <p class="text-[11px] text-on-surface-variant italic bg-white p-2 rounded-lg border border-outline-variant/20">{{ pres.notes }}</p>
+                {% endif %}
+                <div class="flex gap-2 mt-1">
+                  {% if pres.file %}
+                  <a href="{{ pres.file.url }}" target="_blank" class="flex-1 bg-white border border-outline-variant/30 hover:border-primary text-primary font-bold text-label-sm py-2 rounded-lg text-center flex items-center justify-center gap-1 transition-all">
+                    <span class="material-symbols-outlined text-[16px]">download</span> View File
+                  </a>
+                  {% endif %}
+                  <form method="POST" action="{% url 'update_prescription_status' pres.id %}" class="flex-1">
+                    {% csrf_token %}
+                    <select name="status" onchange="this.form.submit()" class="w-full bg-surface border border-outline-variant rounded-lg text-label-sm font-bold py-1.5 focus:ring-primary/20">
+                      <option value="">Update Status</option>
+                      {% for val, label in pres.STATUS_CHOICES %}
+                      <option value="{{ val }}" {% if pres.status == val %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-on-surface-variant">
+              <span class="material-symbols-outlined text-[36px] text-outline-variant">description</span>
+              <p class="font-label-sm text-label-sm mt-2 text-outline">No prescriptions uploaded yet.</p>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Medicine orders panel -->
+          <div class="glass-card rounded-[20px] p-6">
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-1">Received Orders</h3>
+            <p class="font-label-sm text-label-sm text-on-surface-variant mb-6">Track deliveries and payments</p>
+
+            {% if received_orders %}
+            <div class="space-y-4 max-h-[450px] overflow-y-auto pr-1">
+              {% for order in received_orders %}
+              <div class="p-4 border border-outline-variant/30 rounded-2xl bg-surface-container-low flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] text-outline">Order #{{ order.id }}</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase
+                    {% if order.status == 'pending' %}bg-orange-100 text-orange-500
+                    {% elif order.status == 'confirmed' %}bg-secondary-container/20 text-on-secondary-container
+                    {% elif order.status == 'out_for_delivery' %}bg-primary/10 text-primary
+                    {% elif order.status == 'delivered' %}bg-green-100 text-green-600
+                    {% else %}bg-error/10 text-error{% endif %}">
+                    {{ order.get_status_display }}
+                  </span>
+                </div>
+                <div>
+                  <p class="font-bold text-label-md text-on-surface">{{ order.quantity }}x {{ order.medicine.name }}</p>
+                  <p class="text-label-sm text-primary font-bold mt-0.5">₹{{ order.total_price }}</p>
+                </div>
+                <div class="text-[11px] text-on-surface-variant border-t border-b border-outline-variant/10 py-1.5 space-y-1">
+                  <p class="font-semibold">Customer: <span class="font-normal">{{ order.profile.user.get_full_name }}</span></p>
+                  <p class="font-semibold">Address: <span class="font-normal">{{ order.delivery_address }}</span></p>
+                </div>
+                <form method="POST" action="{% url 'update_order_status' order.id %}" class="mt-1">
+                  {% csrf_token %}
+                  <select name="status" onchange="this.form.submit()" class="w-full bg-surface border border-outline-variant rounded-lg text-label-sm font-bold py-1.5 focus:ring-primary/20">
+                    <option value="">Update Status</option>
+                    {% for val, label in order.STATUS_CHOICES %}
+                    <option value="{{ val }}" {% if order.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </form>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-on-surface-variant">
+              <span class="material-symbols-outlined text-[36px] text-outline-variant">local_shipping</span>
+              <p class="font-label-sm text-label-sm mt-2 text-outline">No orders received yet.</p>
+            </div>
+            {% endif %}
+          </div>
+
+        </div>
+
+      </div>
+
+      <footer class="py-unit-lg border-t border-outline-variant flex flex-col md:flex-row justify-between items-center gap-4 text-label-sm font-label-sm text-on-surface-variant">
+        <span class="font-bold text-on-surface">MediSphere</span>
+        <span>© 2026 MediSphere. All rights reserved.</span>
+      </footer>
+
+    </div>
+  </main>
+
+  <!-- ══════ ADD MEDICINE MODAL ══════ -->
+  <div class="modal-backdrop" id="addMedicineModal">
+    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-fade-up">
+      <div class="flex items-center justify-between px-8 py-5 border-b border-outline-variant/30">
+        <div class="flex items-center gap-3">
+          <div class="section-icon bg-primary/10 text-primary w-10 h-10 rounded-lg flex items-center justify-center"><span class="material-symbols-outlined">vaccines</span></div>
+          <h3 class="font-headline-md text-headline-md text-on-surface">Add New Medicine</h3>
+        </div>
+        <button onclick="closeAddMedicineModal()" class="p-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-all" type="button">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form method="POST" action="{% url 'add_medicine' %}" class="p-8 space-y-4" id="medicineForm">
+        {% csrf_token %}
+
+        <div class="space-y-1.5">
+          <label class="font-label-sm text-label-sm text-on-surface-variant">Medicine Name <span class="text-error">*</span></label>
+          <input class="field-input" name="name" placeholder="e.g. Paracetamol 650mg" type="text" required>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="font-label-sm text-label-sm text-on-surface-variant">Description / Notes</label>
+          <textarea class="field-input resize-none" name="description" placeholder="e.g. Pain reliever and fever reducer" rows="2"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="font-label-sm text-label-sm text-on-surface-variant">Price (INR) <span class="text-error">*</span></label>
+            <input class="field-input" name="price" placeholder="e.g. 45.00" type="number" step="0.01" required>
+          </div>
+          <div class="space-y-1.5">
+            <label class="font-label-sm text-label-sm text-on-surface-variant">Initial Stock <span class="text-error">*</span></label>
+            <input class="field-input" name="stock_quantity" placeholder="e.g. 100" type="number" min="0" required>
+          </div>
+        </div>
+
+        <div class="py-2">
+          <label class="flex items-center gap-3 cursor-pointer group">
+            <input type="checkbox" name="is_home_delivery_available" class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" checked>
+            <span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors">Available for Home Delivery</span>
+          </label>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="flex-1 bg-primary text-white py-3 rounded-xl font-label-md text-label-md font-bold hover:bg-primary/95 transition-all">
+            Save Medicine
+          </button>
+          <button type="button" onclick="closeAddMedicineModal()" class="flex-1 border border-outline-variant text-on-surface-variant py-3 rounded-xl font-label-md text-label-md hover:bg-surface-container transition-all">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════ BULK IMPORT MODAL ══════ -->
+  <div class="modal-backdrop" id="bulkImportModal">
+    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-fade-up">
+      <div class="flex items-center justify-between px-8 py-5 border-b border-outline-variant/30">
+        <div class="flex items-center gap-3">
+          <div class="section-icon bg-secondary/10 text-secondary w-10 h-10 rounded-lg flex items-center justify-center"><span class="material-symbols-outlined">upload_file</span></div>
+          <h3 class="font-headline-md text-headline-md text-on-surface">Bulk Import Medicines</h3>
+        </div>
+        <button onclick="closeBulkImportModal()" class="p-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-all" type="button">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form method="POST" action="{% url 'bulk_upload_medicines' %}" enctype="multipart/form-data" class="p-8 space-y-4" id="bulkImportForm">
+        {% csrf_token %}
+
+        <div class="space-y-1.5">
+          <label class="font-label-sm text-label-sm text-on-surface-variant">Choose Excel (.xlsx) or CSV file <span class="text-error">*</span></label>
+          <input class="field-input file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary/10 file:text-secondary hover:file:bg-secondary/20" name="file" type="file" accept=".xlsx,.csv" required>
+        </div>
+
+        <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/20 text-label-sm text-on-surface-variant space-y-2">
+          <p class="font-bold text-on-surface flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">info</span> Expected Column Format:</p>
+          <ol class="list-decimal list-inside space-y-1 text-[11px] pl-1">
+            <li><strong>Medicine Name</strong> (required)</li>
+            <li><strong>Description</strong> (optional)</li>
+            <li><strong>Price</strong> (required, e.g. 12.50)</li>
+            <li><strong>Stock Quantity</strong> (optional, e.g. 100)</li>
+            <li><strong>Home Delivery Available</strong> (optional, yes/no)</li>
+          </ol>
+          <p class="text-[10px] text-outline italic mt-2">Note: Keep headers in row 1, data starts from row 2.</p>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="flex-1 bg-primary text-white py-3 rounded-xl font-label-md text-label-md font-bold hover:bg-primary/95 transition-all">
+            Upload &amp; Import
+          </button>
+          <button type="button" onclick="closeBulkImportModal()" class="flex-1 border border-outline-variant text-on-surface-variant py-3 rounded-xl font-label-md text-label-md hover:bg-surface-container transition-all">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('addMedicineModal');
+    function openAddMedicineModal() { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeAddMedicineModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeAddMedicineModal(); });
+
+    const bulkModal = document.getElementById('bulkImportModal');
+    function openBulkImportModal() { bulkModal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeBulkImportModal() { bulkModal.classList.remove('open'); document.body.style.overflow = ''; }
+    bulkModal.addEventListener('click', (e) => { if (e.target === bulkModal) closeBulkImportModal(); });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAddMedicineModal();
+        closeBulkImportModal();
+      }
+    });
+  </script>
+</body>
+</html>

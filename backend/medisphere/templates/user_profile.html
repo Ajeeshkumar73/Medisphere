@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>{% if is_edit %}Edit Profile{% else %}Complete Your Profile{% endif %} | MediSphere</title>
+  <meta name="description" content="Set up your MediSphere medical profile and digital health pass.">
+  {% include 'tailwind_setup.html' %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Inter", sans-serif; background-color: #f8fafc; -webkit-font-smoothing: antialiased; }
+    .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; vertical-align: middle; display: inline-block; line-height: 1; }
+    .form-card { background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05); }
+    .field-input { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s; background: #fff; }
+    .field-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    .field-input:read-only { background: #f1f5f9; color: #1e40af; font-weight: 600; cursor: not-allowed; }
+    .section-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 100; display: none; align-items: center; justify-content: center; }
+    .modal-backdrop.open { display: flex; }
+  </style>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="h-screen sticky top-0 w-64 flex-col bg-white border-r border-slate-200 hidden md:flex p-4 gap-2 z-50">
+    <div class="mb-6 px-2">
+      <a href="{% url 'landing_page' %}" class="flex items-center gap-2">
+        <h1 class="text-xl font-bold text-primary">MediSphere</h1>
+      </a>
+      <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1">Patient Portal</p>
+    </div>
+    <nav class="flex-1 space-y-1">
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_dashboard' %}">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-label-md text-label-md">Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white font-semibold rounded-lg" href="{% url 'user_profile' %}">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="font-label-md text-label-md">My Profile</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'medical_reports' %}">
+        <span class="material-symbols-outlined">folder_shared</span>
+        <span class="font-label-md text-label-md">Medical Records</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_pharmacy' %}">
+        <span class="material-symbols-outlined">medical_services</span>
+        <span class="font-label-md text-label-md">Pharmacy</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_lab' %}">
+        <span class="material-symbols-outlined">biotech</span>
+        <span class="font-label-md text-label-md">Lab Tests</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'ai_analyser' %}">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="font-label-md text-label-md">Report Analyzer</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_appointments' %}">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span class="font-label-md text-label-md">Appointments &amp; Orders</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'expenses' %}">
+        <span class="material-symbols-outlined">payments</span>
+        <span class="font-label-md text-label-md">Expenses</span>
+      </a>
+    </nav>
+    <div class="mt-auto pt-4 border-t border-slate-200 space-y-1">
+      <a class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg" href="{% url 'logout' %}">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-label-md text-label-md">Sign Out</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+
+    <!-- Top bar -->
+    <header class="sticky top-0 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 flex items-center justify-between px-margin-desktop h-16 z-40">
+      <div>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">My Profile</h2>
+        <p class="text-label-sm text-on-surface-variant">View and manage your medical profile.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="editProfileBtn" onclick="toggleEditMode(true)" class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-700 transition-colors">
+          <span class="material-symbols-outlined text-[18px]">edit</span>
+          Edit Profile
+        </button>
+        <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-label-md">
+          {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+        </div>
+        <div class="hidden sm:block text-right">
+         <p class="font-label-md text-label-md font-bold text-on-surface">
+                {{ user.get_full_name|default:user.username }}
+              </p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">
+                {% if profile %}{{ profile.get_role_display }}{% else %}Member{% endif %}
+              </p>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-margin-desktop max-w-5xl w-full mx-auto space-y-gutter animate-fade-up">
+
+      <!-- Django messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-error-container text-error{% else %}bg-secondary-container/20 text-on-secondary-container{% endif %} font-label-md text-label-md flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- ══════ DIGITAL EMERGENCY HEALTH PASS & AI SUMMARY QR ══════ -->
+      <section class="form-card bg-blue-50/70 border border-blue-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+        <div class="flex items-center gap-5">
+          <div class="relative group cursor-pointer" onclick="showMyselfQrModal()">
+            <img id="myselfQrImg" src="{% url 'ai_summary_qr_code' 'myself' profile.id %}" 
+              alt="Emergency AI Summary QR Code" class="w-24 h-24 rounded-2xl border-2 border-primary/30 p-1 bg-white shadow-md group-hover:scale-105 transition-transform">
+            <span class="absolute -bottom-1 -right-1 bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase shadow">QR</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="bg-primary/15 text-primary text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Scannable Emergency AI Pass</span>
+              <span class="text-on-surface-variant text-[11px] font-bold">{{ profile.get_patient_id }}</span>
+            </div>
+            <h3 class="font-headline-md text-headline-md font-bold text-on-surface mt-1">{{ user.get_full_name|default:user.username }}</h3>
+            <p class="text-label-sm text-on-surface-variant mt-0.5 flex flex-wrap items-center gap-3">
+              {% if profile.blood_group %}<span class="font-bold text-error flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">drop</span> {{ profile.blood_group }}</span>{% endif %}
+              {% if profile.emergency_contact_phone %}<span>Emergency: <strong>{{ profile.emergency_contact_name|default:"Contact" }}</strong> ({{ profile.emergency_contact_phone }})</span>{% endif %}
+            </p>
+            <p class="text-[11px] text-blue-800 font-medium mt-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px] text-primary">qr_code_scanner</span>
+              Scan with mobile phone camera to view doctor-ready AI Summary Report &amp; medical records.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <a href="{% url 'ai_summary_qr_view' 'myself' profile.id %}" target="_blank" class="px-4 py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl shadow hover:bg-blue-700 transition-all flex items-center justify-center gap-1.5 whitespace-nowrap">
+            <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+            View AI Summary Report
+          </a>
+          <button type="button" onclick="showMyselfQrModal()" class="px-4 py-2.5 bg-white text-slate-700 font-bold text-xs rounded-xl border border-slate-300 hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 whitespace-nowrap">
+            <span class="material-symbols-outlined text-[18px]">qr_code_2</span>
+            Show QR Pass
+          </button>
+        </div>
+      </section>
+
+      <!-- Edit Form (hidden by default, shown on Edit Profile click) -->
+      <div id="editFormWrapper" class="hidden space-y-gutter">
+      <form method="POST" action="{% url 'user_profile' %}" id="profileForm" class="space-y-gutter">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_profile">
+
+        <!-- ══════ 1. PERSONAL INFORMATION ══════ -->
+        <section class="form-card bg-white rounded-[20px] p-8">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="section-icon bg-primary/10 text-primary"><span class="material-symbols-outlined">person</span></div>
+            <h3 class="font-headline-md text-headline-md text-on-surface">Personal Information</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Patient ID</label>
+              <input class="field-input" readonly type="text" value="{{ profile.get_patient_id }}">
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">First Name</label>
+              <input class="field-input" name="first_name" placeholder="John" type="text" value="{{ user.first_name }}">
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Last Name</label>
+              <input class="field-input" name="last_name" placeholder="Doe" type="text" value="{{ user.last_name }}">
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Date of Birth</label>
+              <input class="field-input" name="date_of_birth" type="date" value="{{ profile.date_of_birth|default:'' }}">
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Age</label>
+              <input class="field-input" name="age" placeholder="e.g. 32" type="number" value="{{ profile.age|default:'' }}">
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Gender</label>
+              <select class="field-input" name="gender">
+                <option value="">-- Select --</option>
+                <option value="male" {% if profile.gender == 'male' %}selected{% endif %}>Male</option>
+                <option value="female" {% if profile.gender == 'female' %}selected{% endif %}>Female</option>
+                <option value="non_binary" {% if profile.gender == 'non_binary' %}selected{% endif %}>Non-binary</option>
+                <option value="other" {% if profile.gender == 'other' %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Mobile Number</label>
+              <input class="field-input" name="phone" placeholder="+91 9876543210" type="tel" value="{{ profile.phone|default:'' }}">
+            </div>
+
+            <div class="md:col-span-2 space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Residential Address</label>
+              <input class="field-input" name="address" placeholder="123 Clinical Way, Health City" type="text" value="{{ profile.address|default:'' }}">
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ══════ 2. MEDICAL VITALS ══════ -->
+        <section class="form-card bg-white rounded-[20px] p-8">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="section-icon bg-error/10 text-error"><span class="material-symbols-outlined">monitor_heart</span></div>
+            <h3 class="font-headline-md text-headline-md text-on-surface">Medical Vitals</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Blood Group</label>
+              <select class="field-input" name="blood_group">
+                <option value="">-- Select --</option>
+                {% for val, label in profile.BLOOD_GROUP_CHOICES %}
+                  <option value="{{ val }}" {% if profile.blood_group == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Height (cm)</label>
+              <input class="field-input" id="height" name="height_cm" placeholder="175" type="number" step="0.1" value="{{ profile.height_cm|default:'' }}">
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Weight (kg)</label>
+              <input class="field-input" id="weight" name="weight_kg" placeholder="70" type="number" step="0.1" value="{{ profile.weight_kg|default:'' }}">
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">BMI Index</label>
+              <div class="relative">
+                <input class="field-input" id="bmi" placeholder="Auto-calculated" readonly type="text" value="{{ profile.bmi|default:'' }}">
+                <span class="absolute right-3 top-3 text-[10px] text-outline font-bold">AUTO</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Disease / Condition</label>
+              <input class="field-input" name="disease_name" placeholder="e.g. Hypertension" type="text" value="{{ profile.disease_name|default:'' }}">
+            </div>
+
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Treatment Duration (Years)</label>
+              <input class="field-input" name="treatment_duration_years" placeholder="e.g. 2" type="number" step="0.5" value="{{ profile.treatment_duration_years|default:'' }}">
+            </div>
+
+          </div>
+          <p class="mt-4 text-[12px] text-outline italic">BMI is calculated automatically from height and weight on save.</p>
+        </section>
+
+        <!-- ══════ 3. ALLERGIES ══════ -->
+        <section class="form-card bg-white rounded-[20px] p-8">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="section-icon bg-error/10 text-error"><span class="material-symbols-outlined">warning</span></div>
+            <h3 class="font-headline-md text-headline-md text-on-surface">Allergies</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Medicine Allergies</label>
+              <input class="field-input" name="allergy_medicine" placeholder="e.g. Penicillin, Sulfa drugs" type="text" value="{{ profile.allergy_medicine|default:'' }}">
+            </div>
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Food Allergies</label>
+              <input class="field-input" name="allergy_food" placeholder="e.g. Peanuts, Milk" type="text" value="{{ profile.allergy_food|default:'' }}">
+            </div>
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Other Allergies</label>
+              <input class="field-input" name="allergy_other" placeholder="e.g. Latex, Pollen" type="text" value="{{ profile.allergy_other|default:'' }}">
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════ 4. EMERGENCY CONTACTS ══════ -->
+        <section class="form-card bg-white rounded-[20px] p-8">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="section-icon bg-secondary/10 text-secondary"><span class="material-symbols-outlined">emergency</span></div>
+            <h3 class="font-headline-md text-headline-md text-on-surface">Emergency Contact</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Contact Name</label>
+              <input class="field-input" name="emergency_contact_name" placeholder="Full name" type="text" value="{{ profile.emergency_contact_name|default:'' }}">
+            </div>
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Contact Phone</label>
+              <input class="field-input" name="emergency_contact_phone" placeholder="+91 9000000000" type="tel" value="{{ profile.emergency_contact_phone|default:'' }}">
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════ 5. PRIMARY CONSULTANT ══════ -->
+        <section class="form-card bg-white rounded-[20px] p-8">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="section-icon bg-primary/10 text-primary"><span class="material-symbols-outlined">medical_services</span></div>
+            <h3 class="font-headline-md text-headline-md text-on-surface">Primary Consultant</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Doctor Name</label>
+              <input class="field-input" name="doctor_name" placeholder="Dr. Alexander Smith" type="text" value="{{ profile.doctor_name|default:'' }}">
+            </div>
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Specialization</label>
+              <input class="field-input" name="doctor_specialization" placeholder="e.g. Cardiology" type="text" value="{{ profile.doctor_specialization|default:'' }}">
+            </div>
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Doctor's Phone</label>
+              <input class="field-input" name="doctor_phone" placeholder="+91 9000000000" type="tel" value="{{ profile.doctor_phone|default:'' }}">
+            </div>
+            <div class="space-y-2">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Hospital / Clinic</label>
+              <input class="field-input" name="doctor_hospital" placeholder="St. Jude Medical Center" type="text" value="{{ profile.doctor_hospital|default:'' }}">
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════ SAVE ACTIONS ══════ -->
+        <div class="flex flex-col md:flex-row items-center gap-4 pt-2 pb-4">
+          <button class="w-full md:w-auto bg-primary text-white font-label-md text-label-md px-10 py-4 rounded-xl shadow-lg hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2" type="submit" id="saveBtn">
+            <span class="material-symbols-outlined text-[20px]">save</span>
+            {% if is_edit %}Save Changes{% else %}Save &amp; Continue to Dashboard{% endif %}
+          </button>
+          {% if is_edit %}
+          <a href="{% url 'user_dashboard' %}" class="w-full md:w-auto text-center text-on-surface-variant font-label-md text-label-md px-10 py-4 rounded-xl hover:bg-surface-container transition-all border border-outline-variant">Back to Dashboard</a>
+          {% else %}
+          <a href="{% url 'user_dashboard' %}" class="w-full md:w-auto text-center text-on-surface-variant font-label-md text-label-md px-10 py-4 rounded-xl hover:bg-surface-container transition-all">Skip for now</a>
+          {% endif %}
+          <button type="button" onclick="toggleEditMode(false)" class="w-full md:w-auto text-center text-on-surface-variant font-label-md text-label-md px-10 py-4 rounded-xl hover:bg-surface-container transition-all border border-outline-variant">
+            Cancel
+          </button>
+        </div>
+      </form>
+      </div> <!-- end editFormWrapper -->
+
+      <!-- ══════ 5. FAMILY MEMBERS ══════ -->
+      <section class="form-card bg-white rounded-[20px] p-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="section-icon bg-secondary/10 text-secondary"><span class="material-symbols-outlined">group</span></div>
+            <div>
+              <h3 class="font-headline-md text-headline-md text-on-surface">Family Members</h3>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">Complete clinical profiles &amp; QR Health Passes for your family</p>
+            </div>
+          </div>
+          <button onclick="openFamilyModal()" class="flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-all active:scale-95 shadow-md" type="button">
+            <span class="material-symbols-outlined text-[20px]">person_add</span>
+            Add Family Member
+          </button>
+        </div>
+
+        {% if family_members %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {% for member in family_members %}
+          <div class="p-6 border border-outline-variant/40 rounded-2xl bg-surface-container-low flex flex-col justify-between hover:border-primary/40 hover:shadow-md transition-all relative overflow-hidden group">
+            
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div class="flex items-start gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-headline-md flex-shrink-0 border border-primary/20">
+                  {{ member.full_name|first|upper }}
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h4 class="font-bold text-on-surface text-body-lg">{{ member.full_name }}</h4>
+                    <span class="bg-primary-container/15 text-primary text-[10px] font-black px-2 py-0.5 rounded-full uppercase">{{ member.get_relation_display }}</span>
+                  </div>
+                  <p class="text-label-sm text-on-surface-variant font-medium mt-0.5">
+                    ID: <strong class="text-on-surface">{{ member.get_member_id }}</strong>
+                    {% if member.age %} · {{ member.age }} yrs{% endif %}
+                    {% if member.gender %} · {{ member.get_gender_display }}{% endif %}
+                    {% if member.blood_group %}<span class="text-error font-bold ml-1">🩸 {{ member.blood_group }}</span>{% endif %}
+                  </p>
+                </div>
+              </div>
+
+              <!-- QR Code Preview Thumbnail -->
+              <div class="flex flex-col items-center cursor-pointer group/qr" onclick="showMemberQrModal('{{ member.id }}')">
+                <img id="memberQrImg_{{ member.id }}" 
+                  src="{% url 'ai_summary_qr_code' 'member' member.id %}" 
+                  alt="AI Summary QR Code" class="w-14 h-14 rounded-xl border border-outline-variant/60 p-1 bg-white shadow-sm group-hover/qr:scale-105 transition-transform">
+                <span class="text-[9px] font-bold text-primary mt-1 flex items-center gap-0.5"><span class="material-symbols-outlined text-[10px]">qr_code_2</span> Pass</span>
+              </div>
+            </div>
+
+            <!-- Details Chips -->
+            <div class="space-y-2 py-3 border-t border-b border-outline-variant/20 mb-4 text-label-sm text-on-surface-variant">
+              {% if member.height_cm or member.weight_kg or member.bmi %}
+              <div class="flex items-center gap-3 text-[12px]">
+                <span class="material-symbols-outlined text-[16px] text-primary">monitor_weight</span>
+                <span>
+                  {% if member.height_cm %}H: {{ member.height_cm }} cm{% endif %}
+                  {% if member.weight_kg %} · W: {{ member.weight_kg }} kg{% endif %}
+                  {% if member.bmi %}<strong class="text-primary font-bold"> · BMI: {{ member.bmi }}</strong>{% endif %}
+                </span>
+              </div>
+              {% endif %}
+
+              {% if member.disease_name or member.medical_conditions %}
+              <div class="flex items-center gap-3 text-[12px]">
+                <span class="material-symbols-outlined text-[16px] text-orange-500">medical_information</span>
+                <span class="truncate">
+                  Condition: <strong>{{ member.disease_name|default:member.medical_conditions }}</strong>
+                  {% if member.treatment_duration_years %} ({{ member.treatment_duration_years }} yrs){% endif %}
+                </span>
+              </div>
+              {% endif %}
+
+              {% if member.allergy_medicine or member.allergy_food %}
+              <div class="flex items-center gap-3 text-[12px] text-error font-medium">
+                <span class="material-symbols-outlined text-[16px] text-error">warning</span>
+                <span class="truncate">Allergies: {{ member.allergy_medicine|default:'' }} {{ member.allergy_food|default:'' }}</span>
+              </div>
+              {% endif %}
+
+              {% if member.emergency_contact_phone %}
+              <div class="flex items-center gap-3 text-[12px]">
+                <span class="material-symbols-outlined text-[16px] text-secondary">emergency</span>
+                <span>Emergency: {{ member.emergency_contact_name|default:"Contact" }} ({{ member.emergency_contact_phone }})</span>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Card Actions -->
+            <div class="flex items-center justify-between pt-1">
+              <button type="button" onclick="showMemberQrModal('{{ member.id }}')"
+                class="px-3.5 py-1.5 bg-primary/10 text-primary font-bold text-label-sm rounded-lg hover:bg-primary/20 transition-all flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">qr_code_scanner</span> View Pass
+              </button>
+
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="openEditFamilyModal(this)"
+                  id="btnEdit_{{ member.id }}"
+                  data-id="{{ member.id }}"
+                  data-qrcode="{% url 'ai_summary_qr_code' 'member' member.id %}"
+                  data-qrview="{% url 'ai_summary_qr_view' 'member' member.id %}"
+                  data-fullname="{{ member.full_name }}"
+                  data-relation="{{ member.relation }}"
+                  data-dob="{{ member.date_of_birth|date:'Y-m-d'|default:'' }}"
+                  data-age="{{ member.age|default:'' }}"
+                  data-gender="{{ member.gender|default:'' }}"
+                  data-blood="{{ member.blood_group|default:'' }}"
+                  data-phone="{{ member.phone|default:'' }}"
+                  data-address="{{ member.address|default:'' }}"
+                  data-height="{{ member.height_cm|default:'' }}"
+                  data-weight="{{ member.weight_kg|default:'' }}"
+                  data-disease="{{ member.disease_name|default:'' }}"
+                  data-duration="{{ member.treatment_duration_years|default:'' }}"
+                  data-conditions="{{ member.medical_conditions|default:'' }}"
+                  data-allergymed="{{ member.allergy_medicine|default:'' }}"
+                  data-allergyfood="{{ member.allergy_food|default:'' }}"
+                  data-allergyother="{{ member.allergy_other|default:'' }}"
+                  data-emergname="{{ member.emergency_contact_name|default:'' }}"
+                  data-emergphone="{{ member.emergency_contact_phone|default:'' }}"
+                  data-docname="{{ member.doctor_name|default:'' }}"
+                  data-docspec="{{ member.doctor_specialization|default:'' }}"
+                  data-docphone="{{ member.doctor_phone|default:'' }}"
+                  data-dochosp="{{ member.doctor_hospital|default:'' }}"
+                  class="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center gap-1 text-label-sm font-bold">
+                  <span class="material-symbols-outlined text-[18px]">edit</span> Edit
+                </button>
+                <form method="POST" action="{% url 'user_profile' %}" onsubmit="return confirm('Remove {{ member.full_name }}?')">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_family_member">
+                  <input type="hidden" name="member_id" value="{{ member.id }}">
+                  <button type="submit" class="p-2 text-outline hover:text-error hover:bg-error/5 rounded-lg transition-colors" title="Remove">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Hidden JSON for Member Details -->
+            <div id="memberJson_{{ member.id }}" class="hidden">
+              {
+                "id": "{{ member.id }}",
+                "member_id": "{{ member.get_member_id }}",
+                "name": "{{ member.full_name|escapejs }}",
+                "relation": "{{ member.get_relation_display|escapejs }}",
+                "dob": "{{ member.date_of_birth|default:'' }}",
+                "age": "{{ member.age|default:'' }}",
+                "gender": "{{ member.get_gender_display|default:'' }}",
+                "blood": "{{ member.blood_group|default:'' }}",
+                "phone": "{{ member.phone|default:'' }}",
+                "address": "{{ member.address|escapejs|default:'' }}",
+                "height": "{{ member.height_cm|default:'' }}",
+                "weight": "{{ member.weight_kg|default:'' }}",
+                "bmi": "{{ member.bmi|default:'' }}",
+                "disease": "{{ member.disease_name|escapejs|default:'' }}",
+                "duration": "{{ member.treatment_duration_years|default:'' }}",
+                "conditions": "{{ member.medical_conditions|escapejs|default:'' }}",
+                "allergy_med": "{{ member.allergy_medicine|escapejs|default:'' }}",
+                "allergy_food": "{{ member.allergy_food|escapejs|default:'' }}",
+                "allergy_other": "{{ member.allergy_other|escapejs|default:'' }}",
+                "emerg_name": "{{ member.emergency_contact_name|escapejs|default:'' }}",
+                "emerg_phone": "{{ member.emergency_contact_phone|escapejs|default:'' }}",
+                "doc_name": "{{ member.doctor_name|escapejs|default:'' }}",
+                "doc_spec": "{{ member.doctor_specialization|escapejs|default:'' }}",
+                "doc_phone": "{{ member.doctor_phone|escapejs|default:'' }}",
+                "doc_hosp": "{{ member.doctor_hospital|escapejs|default:'' }}"
+              }
+            </div>
+
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-on-surface-variant bg-surface-container-lowest border border-dashed border-outline-variant rounded-2xl">
+          <span class="material-symbols-outlined text-[48px] text-outline-variant">group_add</span>
+          <p class="font-label-md text-label-md font-bold mt-3">No family members added yet.</p>
+          <p class="font-label-sm text-label-sm text-outline mb-4">Click "Add Family Member" to set up complete medical profiles and QR Health Passes.</p>
+          <button onclick="openFamilyModal()" class="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-label-md hover:bg-primary/90 transition-all">
+            <span class="material-symbols-outlined text-[18px]">person_add</span> Add First Member
+          </button>
+        </div>
+        {% endif %}
+      </section>
+
+      <!-- ══════ READ-ONLY PROFILE SUMMARY (shown by default) ══════ -->
+      <section id="profileViewSection" class="form-card bg-white rounded-[20px] p-8 space-y-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-3">
+            <div class="section-icon bg-primary/10 text-primary"><span class="material-symbols-outlined">badge</span></div>
+            <h3 class="font-headline-md text-headline-md text-on-surface">Profile Details</h3>
+          </div>
+          <button onclick="toggleEditMode(true)" class="flex items-center gap-1.5 text-primary font-bold text-sm hover:underline">
+            <span class="material-symbols-outlined text-[18px]">edit</span> Edit
+          </button>
+        </div>
+
+        <!-- Personal Information -->
+        <div>
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Personal Information</p>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Patient ID</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.get_patient_id }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Full Name</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ user.get_full_name|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Date of Birth</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.date_of_birth|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Age</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.age|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Gender</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.get_gender_display|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Mobile</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.phone|default:"—" }}</p>
+            </div>
+            <div class="col-span-2 md:col-span-3 bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Address</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.address|default:"—" }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Medical Vitals -->
+        <div>
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Medical Vitals</p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-red-50 rounded-xl p-3 text-center">
+              <p class="text-[10px] text-red-500 font-semibold uppercase">Blood Group</p>
+              <p class="font-extrabold text-red-700 text-lg mt-0.5">{{ profile.blood_group|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Height</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.height_cm|default:"—" }} {% if profile.height_cm %}cm{% endif %}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Weight</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.weight_kg|default:"—" }} {% if profile.weight_kg %}kg{% endif %}</p>
+            </div>
+            <div class="bg-blue-50 rounded-xl p-3">
+              <p class="text-[10px] text-blue-500 font-semibold uppercase">BMI</p>
+              <p class="font-bold text-blue-800 text-sm mt-0.5">{{ profile.bmi|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Condition</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.disease_name|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Treatment Duration</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.treatment_duration_years|default:"—" }} {% if profile.treatment_duration_years %}yrs{% endif %}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Allergies -->
+        <div>
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Allergies</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-orange-50 rounded-xl p-3">
+              <p class="text-[10px] text-orange-500 font-semibold uppercase">Medicine</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.allergy_medicine|default:"None" }}</p>
+            </div>
+            <div class="bg-orange-50 rounded-xl p-3">
+              <p class="text-[10px] text-orange-500 font-semibold uppercase">Food</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.allergy_food|default:"None" }}</p>
+            </div>
+            <div class="bg-orange-50 rounded-xl p-3">
+              <p class="text-[10px] text-orange-500 font-semibold uppercase">Other</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.allergy_other|default:"None" }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div>
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Emergency Contact</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Contact Name</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.emergency_contact_name|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Contact Phone</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.emergency_contact_phone|default:"—" }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Doctor -->
+        <div>
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Primary Consultant</p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Doctor Name</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.doctor_name|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Specialization</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.doctor_specialization|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Doctor Phone</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.doctor_phone|default:"—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Hospital / Clinic</p>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">{{ profile.doctor_hospital|default:"—" }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="py-6 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+        <span class="font-bold text-slate-800">MediSphere</span>
+        <span>&copy; 2026 MediSphere. All rights reserved.</span>
+      </footer>
+    </div>
+  </main>
+
+  <!-- ══════ ADD / EDIT FAMILY MEMBER MODAL ══════ -->
+  <div class="modal-backdrop" id="familyModal">
+    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-2xl mx-4 my-8 max-h-[90vh] flex flex-col overflow-hidden animate-fade-up">
+      <div class="flex items-center justify-between px-8 py-5 border-b border-outline-variant/30 flex-shrink-0 bg-surface">
+        <div class="flex items-center gap-3">
+          <div class="section-icon bg-secondary/10 text-secondary"><span class="material-symbols-outlined" id="modalIcon">person_add</span></div>
+          <div>
+            <h3 class="font-headline-md text-headline-md text-on-surface" id="modalTitle">Add Family Member</h3>
+            <p class="text-[11px] text-on-surface-variant">Fill in complete medical profile details</p>
+          </div>
+        </div>
+        <button onclick="closeFamilyModal()" class="p-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-all" type="button">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form method="POST" action="{% url 'user_profile' %}" class="p-8 overflow-y-auto space-y-6 flex-1" id="familyForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" id="fm_action" value="add_family_member">
+        <input type="hidden" name="member_id" id="fm_member_id" value="">
+
+        <!-- Section 1: Personal Details -->
+        <div>
+          <h4 class="font-bold text-label-md text-primary mb-3 flex items-center gap-2 border-b pb-1">
+            <span class="material-symbols-outlined text-[18px]">person</span> Personal Details
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2 space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Full Name <span class="text-error">*</span></label>
+              <input class="field-input" id="fm_full_name" name="fm_full_name" placeholder="e.g. Jane Doe" type="text" required>
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Relation <span class="text-error">*</span></label>
+              <select class="field-input" id="fm_relation" name="fm_relation" required>
+                <option value="">-- Select --</option>
+                <option value="spouse">Spouse</option>
+                <option value="parent">Parent</option>
+                <option value="child">Child</option>
+                <option value="sibling">Sibling</option>
+                <option value="grandparent">Grandparent</option>
+                <option value="grandchild">Grandchild</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Gender</label>
+              <select class="field-input" id="fm_gender" name="fm_gender">
+                <option value="">-- Select --</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Date of Birth</label>
+              <input class="field-input" id="fm_dob" name="fm_dob" type="date">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Age</label>
+              <input class="field-input" id="fm_age" name="fm_age" placeholder="e.g. 45" type="number">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Phone Number</label>
+              <input class="field-input" id="fm_phone" name="fm_phone" placeholder="+91 9000000000" type="tel">
+            </div>
+            <div class="sm:col-span-2 space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Residential Address</label>
+              <input class="field-input" id="fm_address" name="fm_address" placeholder="Residential address..." type="text">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Medical Vitals -->
+        <div>
+          <h4 class="font-bold text-label-md text-error mb-3 flex items-center gap-2 border-b pb-1">
+            <span class="material-symbols-outlined text-[18px]">monitor_heart</span> Medical Vitals &amp; Conditions
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Blood Group</label>
+              <select class="field-input" id="fm_blood_group" name="fm_blood_group">
+                <option value="">-- Select --</option>
+                <option>A+</option><option>A-</option>
+                <option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option>
+                <option>O+</option><option>O-</option>
+              </select>
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Height (cm)</label>
+              <input class="field-input" id="fm_height_cm" name="fm_height_cm" placeholder="165" type="number" step="0.1">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Weight (kg)</label>
+              <input class="field-input" id="fm_weight_kg" name="fm_weight_kg" placeholder="60" type="number" step="0.1">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Disease / Condition</label>
+              <input class="field-input" id="fm_disease_name" name="fm_disease_name" placeholder="e.g. Asthma" type="text">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Duration (Years)</label>
+              <input class="field-input" id="fm_treatment_duration_years" name="fm_treatment_duration_years" placeholder="1.5" type="number" step="0.5">
+            </div>
+            <div class="sm:col-span-3 space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Other Medical Conditions</label>
+              <input class="field-input" id="fm_conditions" name="fm_conditions" placeholder="Additional conditions or history..." type="text">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Allergies -->
+        <div>
+          <h4 class="font-bold text-label-md text-orange-600 mb-3 flex items-center gap-2 border-b pb-1">
+            <span class="material-symbols-outlined text-[18px]">warning</span> Allergies
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Medicine Allergies</label>
+              <input class="field-input" id="fm_allergy_medicine" name="fm_allergy_medicine" placeholder="e.g. Penicillin" type="text">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Food Allergies</label>
+              <input class="field-input" id="fm_allergy_food" name="fm_allergy_food" placeholder="e.g. Peanuts" type="text">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Other Allergies</label>
+              <input class="field-input" id="fm_allergy_other" name="fm_allergy_other" placeholder="e.g. Latex" type="text">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Emergency & Doctor -->
+        <div>
+          <h4 class="font-bold text-label-md text-secondary mb-3 flex items-center gap-2 border-b pb-1">
+            <span class="material-symbols-outlined text-[18px]">emergency</span> Emergency Contact &amp; Doctor
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Emergency Contact Name</label>
+              <input class="field-input" id="fm_emergency_contact_name" name="fm_emergency_contact_name" placeholder="Full name" type="text">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Emergency Phone</label>
+              <input class="field-input" id="fm_emergency_contact_phone" name="fm_emergency_contact_phone" placeholder="+91 9000000000" type="tel">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Primary Doctor Name</label>
+              <input class="field-input" id="fm_doctor_name" name="fm_doctor_name" placeholder="Dr. Alexander" type="text">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Specialization / Clinic</label>
+              <input class="field-input" id="fm_doctor_specialization" name="fm_doctor_specialization" placeholder="Cardiology / City Clinic" type="text">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Doctor's Phone</label>
+              <input class="field-input" id="fm_doctor_phone" name="fm_doctor_phone" placeholder="+91 9000000000" type="tel">
+            </div>
+            <div class="space-y-1">
+              <label class="font-label-sm text-label-sm text-on-surface-variant">Doctor's Hospital</label>
+              <input class="field-input" id="fm_doctor_hospital" name="fm_doctor_hospital" placeholder="Hospital name" type="text">
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-4 pt-4 border-t flex-shrink-0">
+          <button type="submit" id="fm_submit_btn" class="flex-1 bg-primary text-white py-3.5 rounded-xl font-label-md text-label-md font-bold hover:bg-primary/90 transition-all active:scale-95 shadow-md">
+            Save Member Profile
+          </button>
+          <button type="button" onclick="closeFamilyModal()" class="px-6 border border-outline-variant text-on-surface-variant py-3.5 rounded-xl font-label-md text-label-md hover:bg-surface-container transition-all">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════ EMERGENCY DIGITAL HEALTH PASS QR MODAL ══════ -->
+  <div class="modal-backdrop" id="qrPassModal">
+    <div class="bg-white rounded-[28px] shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-fade-up border-4 border-primary/20">
+      
+      <!-- ID Pass Header -->
+      <div class="bg-gradient-to-r from-primary to-primary-container p-6 text-white text-center relative">
+        <button onclick="closeQrPassModal()" class="absolute top-4 right-4 text-white/80 hover:text-white bg-black/10 hover:bg-black/20 rounded-full p-1 transition-colors">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+        <div class="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest mb-2">
+          <span class="material-symbols-outlined text-[14px]">local_hospital</span> Emergency Health Pass
+        </div>
+        <h3 class="text-headline-md font-extrabold" id="qrPassName">John Doe</h3>
+        <p class="text-label-sm opacity-90 mt-0.5" id="qrPassId">Patient ID: MS-00001</p>
+      </div>
+
+      <!-- QR Code Body -->
+      <div class="p-6 flex flex-col items-center text-center bg-surface-container-lowest">
+        <div class="p-3 bg-white rounded-2xl border-2 border-primary/20 shadow-lg mb-4">
+          <img id="qrPassImg" src="" alt="Emergency QR Code" class="w-48 h-48 rounded-xl object-contain">
+        </div>
+        
+        <p class="text-[11px] text-outline font-bold uppercase tracking-wider mb-4 flex items-center gap-1">
+          <span class="material-symbols-outlined text-[14px] text-primary">qr_code_scanner</span>
+          Scan QR Code for Emergency Medical Record
+        </p>
+
+        <!-- Clinical Details Summary Box -->
+        <div id="qrPassDetails" class="w-full text-left bg-surface p-4 rounded-xl border border-outline-variant/30 text-label-sm space-y-2 text-on-surface-variant mb-6 max-h-48 overflow-y-auto">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 w-full">
+          <a id="qrPassReportLink" href="{% url 'ai_summary_qr_view' 'myself' profile.id %}" target="_blank" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-xs hover:bg-blue-700 transition-all flex items-center justify-center gap-1.5 shadow-md">
+            <span class="material-symbols-outlined text-[18px]">open_in_new</span> Open AI Summary Report
+          </a>
+          <button type="button" onclick="window.print()" class="px-4 border border-outline-variant text-on-surface-variant py-3 rounded-xl font-bold text-xs hover:bg-surface-container transition-all flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-[18px]">print</span> Print Pass
+          </button>
+          <button type="button" onclick="closeQrPassModal()" class="px-4 border border-outline-variant text-on-surface-variant py-3 rounded-xl font-bold text-xs hover:bg-surface-container transition-all">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── BMI auto-calculation for user ──
+    const heightInput = document.getElementById('height');
+    const weightInput = document.getElementById('weight');
+    const bmiOutput = document.getElementById('bmi');
+
+    function calculateBMI() {
+      const h = parseFloat(heightInput?.value) / 100;
+      const w = parseFloat(weightInput?.value);
+      if (h > 0 && w > 0) {
+        const bmi = (w / (h * h)).toFixed(1);
+        bmiOutput.value = bmi;
+        bmiOutput.style.color = bmi < 18.5 ? '#00687a' : bmi < 25 ? '#004ac6' : bmi < 30 ? '#f97316' : '#ba1a1a';
+      } else if (bmiOutput) {
+        bmiOutput.value = '';
+      }
+    }
+    heightInput?.addEventListener('input', calculateBMI);
+    weightInput?.addEventListener('input', calculateBMI);
+
+    // ── Save button loading state ──
+    document.getElementById('profileForm')?.addEventListener('submit', () => {
+      const btn = document.getElementById('saveBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]" style="animation:spin 1s linear infinite;display:inline-block">progress_activity</span> Saving...';
+      }
+    });
+
+    // ── Family member modal open / close / edit ──
+    const familyModal = document.getElementById('familyModal');
+    
+    function openFamilyModal() {
+      document.getElementById('fm_action').value = 'add_family_member';
+      document.getElementById('fm_member_id').value = '';
+      document.getElementById('modalTitle').textContent = 'Add Family Member';
+      document.getElementById('modalIcon').textContent = 'person_add';
+      document.getElementById('fm_submit_btn').textContent = 'Add Family Member';
+      document.getElementById('familyForm').reset();
+      familyModal.classList.add('open'); 
+      document.body.style.overflow = 'hidden'; 
+    }
+
+    function openEditFamilyModal(btn) {
+      document.getElementById('fm_action').value = 'edit_family_member';
+      document.getElementById('fm_member_id').value = btn.dataset.id || btn.getAttribute('data-id') || '';
+      document.getElementById('modalTitle').textContent = 'Edit Family Member Profile';
+      document.getElementById('modalIcon').textContent = 'edit_note';
+      document.getElementById('fm_submit_btn').textContent = 'Save Changes';
+      
+      const d = btn.dataset;
+      document.getElementById('fm_full_name').value = d.fullname || '';
+      document.getElementById('fm_relation').value = d.relation || '';
+      document.getElementById('fm_dob').value = d.dob || '';
+      document.getElementById('fm_age').value = d.age || '';
+      document.getElementById('fm_gender').value = d.gender || '';
+      document.getElementById('fm_blood_group').value = d.blood || '';
+      document.getElementById('fm_phone').value = d.phone || '';
+      document.getElementById('fm_address').value = d.address || '';
+      document.getElementById('fm_height_cm').value = d.height || '';
+      document.getElementById('fm_weight_kg').value = d.weight || '';
+      document.getElementById('fm_disease_name').value = d.disease || '';
+      document.getElementById('fm_treatment_duration_years').value = d.duration || '';
+      document.getElementById('fm_conditions').value = d.conditions || '';
+      document.getElementById('fm_allergy_medicine').value = d.allergymed || '';
+      document.getElementById('fm_allergy_food').value = d.allergyfood || '';
+      document.getElementById('fm_allergy_other').value = d.allergyother || '';
+      document.getElementById('fm_emergency_contact_name').value = d.emergname || '';
+      document.getElementById('fm_emergency_contact_phone').value = d.emergphone || '';
+      document.getElementById('fm_doctor_name').value = d.docname || '';
+      document.getElementById('fm_doctor_specialization').value = d.docspec || '';
+      document.getElementById('fm_doctor_phone').value = d.docphone || '';
+      document.getElementById('fm_doctor_hospital').value = d.dochosp || '';
+
+      familyModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeFamilyModal() { familyModal.classList.remove('open'); document.body.style.overflow = ''; }
+    familyModal.addEventListener('click', (e) => { if (e.target === familyModal) closeFamilyModal(); });
+
+    // ── Emergency Digital Health Pass QR Modal ──
+    const qrPassModal = document.getElementById('qrPassModal');
+    
+    function closeQrPassModal() { qrPassModal.classList.remove('open'); document.body.style.overflow = ''; }
+    qrPassModal.addEventListener('click', (e) => { if (e.target === qrPassModal) closeQrPassModal(); });
+
+    function showMyselfQrModal() {
+      const imgElem = document.getElementById('myselfQrImg');
+      const qrUrl = imgElem ? imgElem.src : "{% url 'ai_summary_qr_code' 'myself' profile.id %}";
+      document.getElementById('qrPassName').textContent = "{{ user.get_full_name|default:user.username|escapejs }}";
+      document.getElementById('qrPassId').textContent = "Primary ID: {{ profile.get_patient_id }}";
+      document.getElementById('qrPassImg').src = qrUrl;
+      document.getElementById('qrPassReportLink').href = "{% url 'ai_summary_qr_view' 'myself' profile.id %}";
+
+      document.getElementById('qrPassDetails').innerHTML = `
+        <p><strong>Role:</strong> Primary Account Holder</p>
+        <p><strong>Blood Group:</strong> <span class="text-error font-bold">${"{{ profile.blood_group|default:'Not set'|escapejs }}"}</span></p>
+        <p><strong>Age / Gender:</strong> ${"{{ profile.age|default:'--' }}"} yrs · ${"{{ profile.get_gender_display|default:'--'|escapejs }}"}</p>
+        <p><strong>Phone:</strong> ${"{{ profile.phone|default:'Not set'|escapejs }}"}</p>
+        <p><strong>Vitals:</strong> Height: ${"{{ profile.height_cm|default:'--' }}"} cm · Weight: ${"{{ profile.weight_kg|default:'--' }}"} kg · BMI: ${"{{ profile.bmi|default:'--' }}"}</p>
+        <p><strong>Medical Condition:</strong> ${"{{ profile.disease_name|default:'None reported'|escapejs }}"}</p>
+        <p><strong>Allergies:</strong> ${"{{ profile.allergy_medicine|default:'None'|escapejs }}"}</p>
+        <p><strong>Emergency Contact:</strong> ${"{{ profile.emergency_contact_name|default:'Not set'|escapejs }}"} (${"{{ profile.emergency_contact_phone|default:'--' }}"})</p>
+        <p><strong>Primary Doctor:</strong> ${"{{ profile.doctor_name|default:'Not set'|escapejs }}"} (${"{{ profile.doctor_hospital|default:''|escapejs }}"})</p>
+      `;
+      qrPassModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function showMemberQrModal(memberId) {
+      const btn = document.getElementById('btnEdit_' + memberId);
+      if (!btn) return;
+      const d = btn.dataset;
+      const memberCode = 'FM-' + String(memberId).padStart(5, '0');
+
+      document.getElementById('qrPassName').textContent = d.fullname + ' (' + (d.relation || 'Member') + ')';
+      document.getElementById('qrPassId').textContent = 'Member ID: ' + memberCode;
+
+      const qrImg = document.getElementById('memberQrImg_' + memberId);
+      if (qrImg) document.getElementById('qrPassImg').src = qrImg.src;
+
+      const reportUrl = d.qrview || ('/AI_analyser/qr/member/' + memberId + '/');
+      document.getElementById('qrPassReportLink').href = reportUrl;
+
+      document.getElementById('qrPassDetails').innerHTML = `
+        <p><strong>Relationship:</strong> ${d.relation || '--'}</p>
+        <p><strong>Blood Group:</strong> <span class="text-error font-bold">${d.blood || 'Not set'}</span></p>
+        <p><strong>Age / Gender:</strong> ${d.age || '--'} yrs · ${d.gender || '--'}</p>
+        <p><strong>Phone:</strong> ${d.phone || 'Not set'}</p>
+        <p><strong>Vitals:</strong> Height: ${d.height || '--'} cm · Weight: ${d.weight || '--'} kg</p>
+        <p><strong>Disease / Condition:</strong> ${d.disease || d.conditions || 'None reported'}</p>
+        <p><strong>Allergies:</strong> ${d.allergymed || d.allergyfood || 'None'}</p>
+        <p><strong>Emergency Contact:</strong> ${d.emergname || 'Not set'} (${d.emergphone || '--'})</p>
+        <p><strong>Primary Doctor:</strong> ${d.docname || 'Not set'} (${d.dochosp || '--'})</p>
+      `;
+
+      qrPassModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    document.addEventListener('keydown', (e) => { 
+      if (e.key === 'Escape') { closeFamilyModal(); closeQrPassModal(); }
+    });
+
+    // ── CSS spin keyframe ──
+    const style = document.createElement('style');
+    style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+
+    // ── Toggle between View and Edit mode ──
+    function toggleEditMode(showEdit) {
+      const editWrapper = document.getElementById('editFormWrapper');
+      const viewSection = document.getElementById('profileViewSection');
+      const editBtn = document.getElementById('editProfileBtn');
+
+      if (showEdit) {
+        editWrapper.classList.remove('hidden');
+        viewSection.classList.add('hidden');
+        if (editBtn) editBtn.classList.add('hidden');
+        editWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        editWrapper.classList.add('hidden');
+        viewSection.classList.remove('hidden');
+        if (editBtn) editBtn.classList.remove('hidden');
+        viewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  </script>
+</body>
+</html>

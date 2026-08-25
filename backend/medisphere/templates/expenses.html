@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Health Expenses Tracker | MediSphere</title>
+  <meta name="description" content="Track your medical, pharmacy, and laboratory expenses with structured analytics.">
+  {% include 'tailwind_setup.html' %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Inter", sans-serif; background-color: #f8fafc; -webkit-font-smoothing: antialiased; }
+    .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; vertical-align: middle; display: inline-block; line-height: 1; }
+    .glass-card { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+    .field-input { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s; background: #fff; }
+    .field-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    .cat-badge { display: inline-flex; align-items: center; gap: 3px; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  </style>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="h-screen sticky top-0 w-64 flex-col bg-white border-r border-slate-200 hidden md:flex p-4 gap-2 z-50">
+    <div class="mb-6 px-2">
+      <a href="{% url 'landing_page' %}" class="flex items-center gap-2">
+        <h1 class="text-xl font-bold text-primary">MediSphere</h1>
+      </a>
+      <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1">Patient Portal</p>
+    </div>
+    <nav class="flex-1 space-y-1">
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_dashboard' %}">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-label-md text-label-md">Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_profile' %}">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="font-label-md text-label-md">My Profile</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'medical_reports' %}">
+        <span class="material-symbols-outlined">folder_shared</span>
+        <span class="font-label-md text-label-md">Medical Records</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_appointments' %}">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span class="font-label-md text-label-md">Appointments &amp; Orders</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_pharmacy' %}">
+        <span class="material-symbols-outlined">medical_services</span>
+        <span class="font-label-md text-label-md">Pharmacy</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_lab' %}">
+        <span class="material-symbols-outlined">biotech</span>
+        <span class="font-label-md text-label-md">Laboratory</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white font-semibold rounded-lg" href="{% url 'expenses' %}">
+        <span class="material-symbols-outlined">payments</span>
+        <span class="font-label-md text-label-md">Expenses</span>
+      </a>
+    </nav>
+    <div class="mt-auto pt-4 border-t border-slate-200 space-y-1">
+      <a class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg" href="{% url 'logout' %}">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-label-md text-label-md">Sign Out</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    <!-- Top bar -->
+    <header class="sticky top-0 bg-white border-b border-slate-200 flex items-center justify-between px-margin-desktop h-16 z-40">
+      <div>
+        <span class="font-label-md text-label-md text-on-surface font-bold">Clinical Expenses &amp; Analytics</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div
+            class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-label-md"
+          >
+            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          </div>
+          <div class="hidden sm:block text-right">
+              <p class="font-label-md text-label-md font-bold text-on-surface">
+                {{ user.get_full_name|default:user.username }}
+              </p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">
+                {% if profile %}{{ profile.get_role_display }}{% else %}Member{% endif %}
+              </p>
+          </div>
+      </div>
+    </header>
+
+    <div class="p-margin-desktop max-w-7xl w-full mx-auto space-y-gutter animate-fade-up">
+      <!-- Django Messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-error-container text-error{% else %}bg-secondary-container/20 text-on-secondary-container{% endif %} font-label-md text-label-md flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- ══════ METRICS DASHBOARD ══════ -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Week Card -->
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-[28px]">calendar_view_week</span>
+          </div>
+          <div>
+            <p class="text-xs text-outline font-bold uppercase tracking-wider">This Week</p>
+            <p class="text-2xl font-black text-on-surface mt-0.5">₹{{ total_week|floatformat:2 }}</p>
+          </div>
+        </div>
+
+        <!-- Month Card -->
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
+            <span class="material-symbols-outlined text-[28px]">calendar_month</span>
+          </div>
+          <div>
+            <p class="text-xs text-outline font-bold uppercase tracking-wider">This Month</p>
+            <p class="text-2xl font-black text-on-surface mt-0.5">₹{{ total_month|floatformat:2 }}</p>
+          </div>
+        </div>
+
+        <!-- Year Card -->
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600">
+            <span class="material-symbols-outlined text-[28px]">calendar_today</span>
+          </div>
+          <div>
+            <p class="text-xs text-outline font-bold uppercase tracking-wider">This Year</p>
+            <p class="text-2xl font-black text-on-surface mt-0.5">₹{{ total_year|floatformat:2 }}</p>
+          </div>
+        </div>
+
+        <!-- Top Category Card -->
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center text-red-600">
+            <span class="material-symbols-outlined text-[28px]">trending_up</span>
+          </div>
+          <div>
+            <p class="text-xs text-outline font-bold uppercase tracking-wider">Highest Spend Category</p>
+            {% if highest_category %}
+              <p class="text-lg font-black text-on-surface mt-0.5">{{ highest_category.category }}</p>
+              <p class="text-[11px] text-gray-600 font-bold">Total: ₹{{ highest_category.total|floatformat:2 }}</p>
+            {% else %}
+              <p class="text-base font-bold text-outline mt-0.5">No records yet</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail analytics block -->
+      {% if highest_purpose %}
+        <div class="bg-primary/5 border border-primary/20 rounded-[20px] p-5 flex items-center justify-between flex-wrap gap-4">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-[28px]">info</span>
+            <div>
+              <p class="text-sm font-semibold text-on-surface">
+                Highest expense description: <span class="font-extrabold text-primary">"{{ highest_purpose.purpose }}"</span>
+              </p>
+              <p class="text-xs text-on-surface-variant">
+                You spent a total of <span class="font-bold">₹{{ highest_purpose.total|floatformat:2 }}</span> on this item.
+              </p>
+            </div>
+          </div>
+          <span class="bg-primary text-white font-bold text-xs px-3.5 py-1.5 rounded-full uppercase">Analytics Indicator</span>
+        </div>
+      {% endif %}
+
+      <!-- ══════ CORE GRID ══════ -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left: Add Expense Form -->
+        <div class="lg:col-span-1 space-y-6">
+          <div class="glass-card rounded-[20px] p-6 md:p-8 space-y-6">
+            <div>
+              <h3 class="font-bold text-headline-md text-on-surface">Add Expense</h3>
+              <p class="text-label-sm text-on-surface-variant">Input healthcare or related expenses</p>
+            </div>
+
+            <form method="POST" action="{% url 'expenses' %}" class="space-y-4">
+              {% csrf_token %}
+              
+              <div class="space-y-1.5">
+                <label class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Amount (INR) <span class="text-error">*</span></label>
+                <input class="field-input font-bold text-primary" name="amount" placeholder="e.g. 1500.00" type="number" step="0.01" min="0.01" required>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Expense Date <span class="text-error">*</span></label>
+                <input class="field-input" name="date" type="date" value="{{ today_str }}" required>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Category <span class="text-error">*</span></label>
+                <select class="field-input" name="category" required>
+                  {% for cat in categories %}
+                    <option value="{{ cat }}">{{ cat }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Purpose / Description <span class="text-error">*</span></label>
+                <input class="field-input" name="purpose" placeholder="e.g. Paracetamol tablets, Blood test booking" type="text" required>
+              </div>
+
+              <button type="submit" class="w-full bg-primary text-white font-bold text-sm py-3.5 rounded-xl hover:bg-primary/95 transition-all shadow-md flex items-center justify-center gap-1.5 mt-4">
+                <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                Save Expense
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right: Expense History -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="glass-card rounded-[20px] p-6 md:p-8">
+            <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+              <div>
+                <h3 class="font-bold text-headline-md text-on-surface">Expense History</h3>
+                <p class="text-label-sm text-on-surface-variant">List of registered healthcare expenses</p>
+              </div>
+              <div class="bg-surface-container-low px-4 py-2 border border-outline-variant/30 rounded-xl font-bold text-xs text-on-surface flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-primary">receipt_long</span>
+                Total Count: {{ expenses.count }}
+              </div>
+            </div>
+
+            {% if expenses %}
+              <div class="space-y-4 max-h-[600px] overflow-y-auto pr-1">
+                {% for exp in expenses %}
+                  <div class="p-5 border border-outline-variant/20 rounded-2xl bg-surface-container-low/50 hover:border-primary/20 transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                      <!-- Icon placeholder based on category -->
+                      <div class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 
+                        {% if exp.category == 'Pharmacy' %}bg-orange-100 text-orange-600
+                        {% elif exp.category == 'Laboratory' %}bg-blue-100 text-blue-600
+                        {% elif exp.category == 'Hospital' %}bg-red-100 text-red-600
+                        {% elif exp.category == 'Consultation' %}bg-purple-100 text-purple-600
+                        {% else %}bg-surface-container text-outline{% endif %}">
+                        <span class="material-symbols-outlined text-[22px]">
+                          {% if exp.category == 'Pharmacy' %}medical_services
+                          {% elif exp.category == 'Laboratory' %}biotech
+                          {% elif exp.category == 'Hospital' %}local_hospital
+                          {% elif exp.category == 'Consultation' %}support_agent
+                          {% else %}payments{% endif %}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 class="font-bold text-on-surface text-base">{{ exp.purpose }}</h4>
+                        <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                          <span class="cat-badge 
+                            {% if exp.category == 'Pharmacy' %}bg-orange-100 text-orange-600
+                            {% elif exp.category == 'Laboratory' %}bg-blue-100 text-blue-600
+                            {% elif exp.category == 'Hospital' %}bg-red-100 text-red-600
+                            {% elif exp.category == 'Consultation' %}bg-purple-100 text-purple-600
+                            {% else %}bg-surface-container text-outline{% endif %}">
+                            {{ exp.category }}
+                          </span>
+                          <span class="text-xs text-outline flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                            {{ exp.date }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-between sm:justify-end gap-5 border-t sm:border-t-0 pt-3 sm:pt-0 border-outline-variant/20">
+                      <span class="text-primary font-black text-xl text-right">₹{{ exp.amount|floatformat:2 }}</span>
+                      
+                      <!-- Delete Action -->
+                      <form method="POST" action="{% url 'delete_expense' exp.id %}" onsubmit="return confirm('Delete this expense entry?')">
+                        {% csrf_token %}
+                        <button type="submit" class="p-2 text-outline hover:text-error hover:bg-error/5 transition-all rounded-xl" title="Delete Expense">
+                          <span class="material-symbols-outlined">delete</span>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center py-20 bg-white border border-outline-variant/30 rounded-[20px]">
+                <span class="material-symbols-outlined text-[64px] text-outline-variant">payments</span>
+                <p class="text-xl font-bold mt-4 text-on-surface">No expenses recorded yet.</p>
+                <p class="text-sm text-outline mt-1.5">Use the left panel form to add your first expense entry.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <footer class="py-6 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
+        <span class="font-bold text-slate-800">MediSphere</span>
+        <span>&copy; 2026 MediSphere. All rights reserved.</span>
+      </footer>
+    </div>
+  </main>
+
+</body>
+</html>

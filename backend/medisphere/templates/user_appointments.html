@@ -1,0 +1,568 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>My Bookings &amp; Appointments | MediSphere</title>
+    {% include 'tailwind_setup.html' %}
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: #f8fafc;
+        -webkit-font-smoothing: antialiased;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+        vertical-align: middle;
+        display: inline-block;
+        line-height: 1;
+      }
+      .glass-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex">
+    <!-- SIDEBAR -->
+    <aside
+      class="h-screen sticky top-0 w-64 flex-col bg-white border-r border-slate-200 hidden md:flex p-4 gap-2 z-50"
+    >
+      <div class="mb-6 px-2">
+        <a href="{% url 'landing_page' %}" class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-primary">MediSphere</h1>
+        </a>
+        <p
+          class="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1"
+        >
+          Patient Portal
+        </p>
+      </div>
+      <nav class="flex-1 space-y-1">
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_dashboard' %}"
+        >
+          <span class="material-symbols-outlined">dashboard</span
+          ><span class="text-sm font-medium">Dashboard</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_profile' %}"
+        >
+          <span class="material-symbols-outlined">manage_accounts</span
+          ><span class="text-sm font-medium">My Profile</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'medical_reports' %}"
+        >
+          <span class="material-symbols-outlined">folder_shared</span
+          ><span class="text-sm font-medium">Medical Records</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 bg-primary text-white font-semibold rounded-lg"
+          href="{% url 'user_appointments' %}"
+        >
+          <span class="material-symbols-outlined">calendar_month</span
+          ><span class="text-sm font-medium">Appointments & Orders</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_lab' %}"
+        >
+          <span class="material-symbols-outlined">biotech</span
+          ><span class="text-sm font-medium">Laboratory</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_pharmacy' %}"
+        >
+          <span class="material-symbols-outlined">medical_services</span
+          ><span class="text-sm font-medium">Pharmacy</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'expenses' %}"
+        >
+          <span class="material-symbols-outlined">payments</span>
+          <span class="text-sm font-medium">Expenses</span>
+        </a>
+      </nav>
+      <div class="mt-auto pt-4 border-t border-slate-200">
+        <a
+          class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+          href="{% url 'logout' %}"
+        >
+          <span class="material-symbols-outlined">logout</span
+          ><span class="text-sm font-medium">Sign Out</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <!-- Top bar -->
+      <header
+        class="sticky top-0 bg-white border-b border-slate-200 flex items-center justify-between px-10 h-16 z-40"
+      >
+        <h2 class="font-bold text-2xl text-on-surface">Manage Bookings</h2>
+        <div class="flex items-center gap-3">
+          <div
+            class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-label-md"
+          >
+            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          </div>
+          <div class="hidden sm:block text-right">
+              <p class="font-label-md text-label-md font-bold text-on-surface">
+                {{ user.get_full_name|default:user.username }}
+              </p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">
+                {% if profile %}{{ profile.get_role_display }}{% else %}Member{% endif %}
+              </p>
+          </div>
+        </div>
+      </header>
+
+      <div class="p-10 max-w-5xl w-full mx-auto space-y-6 animate-fade-up">
+        <!-- Messages -->
+        {% if messages %}{% for message in messages %}
+        <div
+          class="px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-error-container text-error{% else %}bg-secondary-container/20 text-on-secondary-container{% endif %} text-sm flex items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>{{ message }}
+        </div>
+        {% endfor %}{% endif %}
+
+        <div
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"
+        >
+          <div>
+            <h1 class="text-3xl font-black text-on-surface">
+              My Bookings &amp; Orders
+            </h1>
+            <p class="text-sm text-on-surface-variant">
+              View and manage diagnostic tests, medicine purchases, and
+              prescription reviews.
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <a
+              href="{% url 'user_lab' %}"
+              class="bg-primary text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-primary/95 transition-all shadow-md flex items-center gap-1.5"
+            >
+              <span class="material-symbols-outlined text-[16px]">biotech</span>
+              Lab Test
+            </a>
+            <a
+              href="{% url 'user_pharmacy' %}"
+              class="bg-secondary text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-secondary/95 transition-all shadow-md flex items-center gap-1.5"
+            >
+              <span class="material-symbols-outlined text-[16px]"
+                >medical_services</span
+              >
+              Buy Medicine
+            </a>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div
+          class="flex border-b border-outline-variant/30 mb-6 bg-surface-container-low p-1 rounded-xl"
+        >
+          <button
+            onclick="switchCategory('lab')"
+            id="tab-lab"
+            class="flex-1 text-center font-bold text-xs py-3 rounded-lg bg-primary text-white transition-all shadow-sm"
+          >
+            Lab Appointments ({{ appointments|length }})
+          </button>
+          <button
+            onclick="switchCategory('med')"
+            id="tab-med"
+            class="flex-1 text-center font-bold text-xs py-3 rounded-lg text-on-surface-variant hover:text-primary transition-all"
+          >
+            Medicine Orders ({{ medicine_orders|length }})
+          </button>
+          <button
+            onclick="switchCategory('pres')"
+            id="tab-pres"
+            class="flex-1 text-center font-bold text-xs py-3 rounded-lg text-on-surface-variant hover:text-primary transition-all"
+          >
+            Prescription Reviews ({{ prescription_orders|length }})
+          </button>
+        </div>
+
+        <!-- ════════ LAB APPOINTMENTS ════════ -->
+        <div id="section-lab" class="space-y-4">
+          {% if appointments %} {% for appt in appointments %}
+          <div
+            class="glass-card rounded-[20px] p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+          >
+            <div class="flex items-start gap-4">
+              <div
+                class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center flex-shrink-0"
+              >
+                <span class="material-symbols-outlined text-[24px]"
+                  >biotech</span
+                >
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-on-surface">
+                  {{ appt.lab_test.name }}
+                </h3>
+                <p class="text-sm text-on-surface-variant mt-0.5">
+                  Laboratory:
+                  <strong>{{ appt.laboratory.business_name|default:appt.laboratory.user.get_full_name }}</strong>
+                </p>
+
+                <div
+                  class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-on-surface-variant mt-3"
+                >
+                  <span class="flex items-center gap-1"
+                    ><span class="material-symbols-outlined text-[15px]"
+                      >calendar_today</span
+                    >{{ appt.appointment_date }}</span
+                  >
+                  {% if appt.appointment_time %}<span
+                    class="flex items-center gap-1"
+                    ><span class="material-symbols-outlined text-[15px]"
+                      >schedule</span
+                    >{{ appt.appointment_time }}</span
+                  >{% endif %}
+                  <span class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[15px]"
+                      >{% if appt.is_home_collection %}home_health{% else
+                      %}store{% endif %}</span
+                    >
+                    {% if appt.is_home_collection %}Home Collection{% else
+                    %}Walk-in Lab Visit{% endif %}
+                  </span>
+                  <span class="text-primary font-black"
+                    >₹{{ appt.lab_test.price }}</span
+                  >
+                </div>
+
+                {% if appt.is_home_collection and appt.collection_address %}
+                <p
+                  class="text-xs text-outline mt-2 bg-surface-container-low p-2 rounded-lg"
+                >
+                  <strong>Address:</strong> {{ appt.collection_address }}
+                </p>
+                {% endif %} {% if appt.notes %}
+                <p class="text-xs text-outline italic mt-2">
+                  "{{ appt.notes }}"
+                </p>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end gap-3 w-full md:w-auto">
+              <span
+                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider {% if appt.status == 'pending' %}bg-orange-100 text-orange-500 {% elif appt.status == 'confirmed' %}bg-secondary-container/20 text-on-secondary-container {% elif appt.status == 'sample_collected' %}bg-primary/10 text-primary {% elif appt.status == 'report_ready' %}bg-green-100 text-green-600 {% else %}bg-error/10 text-error{% endif %}"
+              >
+                {{ appt.get_status_display }}
+              </span>
+
+              {% if appt.status == 'pending' or appt.status == 'confirmed' %}
+              <form
+                method="POST"
+                action="{% url 'cancel_appointment' appt.id %}"
+                onsubmit="
+                  return confirm(
+                    'Are you sure you want to cancel this appointment?',
+                  );
+                "
+              >
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="text-xs text-error hover:bg-error/5 border border-error/20 px-4 py-2 rounded-lg font-bold transition-all w-full md:w-auto text-center"
+                >
+                  Cancel Appointment
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %} {% else %}
+          <div
+            class="text-center py-20 bg-white border border-outline-variant/30 rounded-[20px]"
+          >
+            <span
+              class="material-symbols-outlined text-[64px] text-outline-variant"
+              >event_busy</span
+            >
+            <p class="text-xl font-bold mt-4 text-on-surface">
+              No bookings found
+            </p>
+            <p class="text-sm text-outline mt-1 mb-6">
+              You haven't booked any laboratory tests or scans yet.
+            </p>
+            <a
+              href="{% url 'user_lab' %}"
+              class="bg-primary text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-primary/95 transition-all shadow-md"
+            >
+              Explore Tests
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- ════════ MEDICINE ORDERS ════════ -->
+        <div id="section-med" class="space-y-4 hidden">
+          {% if medicine_orders %} {% for order in medicine_orders %}
+          <div
+            class="glass-card rounded-[20px] p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+          >
+            <div class="flex items-start gap-4">
+              <div
+                class="w-12 h-12 bg-secondary/10 text-secondary rounded-xl flex items-center justify-center flex-shrink-0"
+              >
+                <span class="material-symbols-outlined text-[24px]"
+                  >shopping_cart</span
+                >
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-on-surface">
+                  {{ order.medicine.name }}
+                </h3>
+                <p class="text-sm text-on-surface-variant mt-0.5">
+                  Pharmacy Store:
+                  <strong
+                    >{{
+                    order.pharmacy.business_name|default:order.pharmacy.user.get_full_name
+                    }}</strong
+                  >
+                </p>
+
+                <div
+                  class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-on-surface-variant mt-3"
+                >
+                  <span class="flex items-center gap-1"
+                    ><span class="material-symbols-outlined text-[15px]"
+                      >calendar_today</span
+                    >Ordered: {{ order.created_at|date:"M d, Y" }}</span
+                  >
+                  <span class="flex items-center gap-1"
+                    ><span class="material-symbols-outlined text-[15px]"
+                      >tag</span
+                    >Quantity: {{ order.quantity }}</span
+                  >
+                  <span class="text-secondary font-black"
+                    >Total Price: ₹{{ order.total_price }}</span
+                  >
+                </div>
+
+                <p
+                  class="text-xs text-outline mt-2 bg-surface-container-low p-2 rounded-lg"
+                >
+                  <strong>Delivery Address:</strong> {{ order.delivery_address
+                  }}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end gap-3 w-full md:w-auto">
+              <span
+                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider {% if order.status == 'pending' %}bg-orange-100 text-orange-500 {% elif order.status == 'confirmed' %}bg-secondary-container/20 text-on-secondary-container {% elif order.status == 'out_for_delivery' %}bg-primary/10 text-primary {% elif order.status == 'delivered' %}bg-green-100 text-green-600 {% else %}bg-error/10 text-error{% endif %}"
+              >
+                {{ order.get_status_display }}
+              </span>
+
+              {% if order.status == 'pending' %}
+              <form
+                method="POST"
+                action="{% url 'cancel_medicine_order' order.id %}"
+                onsubmit="
+                  return confirm('Are you sure you want to cancel this order?');
+                "
+              >
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="text-xs text-error hover:bg-error/5 border border-error/20 px-4 py-2 rounded-lg font-bold transition-all w-full md:w-auto text-center"
+                >
+                  Cancel Order
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %} {% else %}
+          <div
+            class="text-center py-20 bg-white border border-outline-variant/30 rounded-[20px]"
+          >
+            <span
+              class="material-symbols-outlined text-[64px] text-outline-variant"
+              >event_busy</span
+            >
+            <p class="text-xl font-bold mt-4 text-on-surface">
+              No orders found
+            </p>
+            <p class="text-sm text-outline mt-1 mb-6">
+              You haven't placed any medicine buy orders yet.
+            </p>
+            <a
+              href="{% url 'user_pharmacy' %}"
+              class="bg-secondary text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-secondary/95 transition-all shadow-md"
+            >
+              Buy Medicine
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- ════════ PRESCRIPTION REVIEWS ════════ -->
+        <div id="section-pres" class="space-y-4 hidden">
+          {% if prescription_orders %} {% for pres in prescription_orders %}
+          <div
+            class="glass-card rounded-[20px] p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+          >
+            <div class="flex items-start gap-4">
+              <div
+                class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center flex-shrink-0"
+              >
+                <span class="material-symbols-outlined text-[24px]"
+                  >description</span
+                >
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-on-surface">
+                  Prescription Review Request
+                </h3>
+                <p class="text-sm text-on-surface-variant mt-0.5">
+                  Sent to Pharmacy:
+                  <strong
+                    >{{
+                    pres.pharmacy.business_name|default:pres.pharmacy.user.get_full_name
+                    }}</strong
+                  >
+                </p>
+
+                <div
+                  class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-on-surface-variant mt-3"
+                >
+                  <span class="flex items-center gap-1"
+                    ><span class="material-symbols-outlined text-[15px]"
+                      >calendar_today</span
+                    >Uploaded: {{ pres.created_at|date:"M d, Y • h:i A" }}</span
+                  >
+                  <a
+                    href="{{ pres.file.url }}"
+                    target="_blank"
+                    class="text-primary hover:underline flex items-center gap-1"
+                  >
+                    <span class="material-symbols-outlined text-[15px]"
+                      >download</span
+                    >
+                    Download Document
+                  </a>
+                </div>
+
+                {% if pres.notes %}
+                <p
+                  class="text-xs text-outline italic mt-2 bg-surface-container-low p-2 rounded-lg"
+                >
+                  <strong>Patient Notes:</strong> "{{ pres.notes }}"
+                </p>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end gap-3 w-full md:w-auto">
+              <span
+                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider {% if pres.status == 'pending' %}bg-orange-100 text-orange-500 {% elif pres.status == 'reviewed' %}bg-secondary-container/20 text-on-secondary-container {% elif pres.status == 'filled' %}bg-green-100 text-green-600 {% else %}bg-error/10 text-error{% endif %}"
+              >
+                {{ pres.get_status_display }}
+              </span>
+            </div>
+          </div>
+          {% endfor %} {% else %}
+          <div
+            class="text-center py-20 bg-white border border-outline-variant/30 rounded-[20px]"
+          >
+            <span
+              class="material-symbols-outlined text-[64px] text-outline-variant"
+              >event_busy</span
+            >
+            <p class="text-xl font-bold mt-4 text-on-surface">
+              No prescriptions uploaded
+            </p>
+            <p class="text-sm text-outline mt-1 mb-6">
+              You haven't uploaded any doctor prescriptions yet.
+            </p>
+            <a
+              href="{% url 'user_pharmacy' %}"
+              class="bg-secondary text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-secondary/95 transition-all shadow-md"
+            >
+              Upload Prescription
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        <footer
+          class="py-6 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500"
+        >
+          <span class="font-bold text-slate-800">MediSphere</span>
+          <span>&copy; 2026 MediSphere. All rights reserved.</span>
+        </footer>
+      </div>
+    </main>
+
+    <script>
+      function switchCategory(category) {
+        // Get references
+        const secLab = document.getElementById("section-lab");
+        const secMed = document.getElementById("section-med");
+        const secPres = document.getElementById("section-pres");
+
+        const tabLab = document.getElementById("tab-lab");
+        const tabMed = document.getElementById("tab-med");
+        const tabPres = document.getElementById("tab-pres");
+
+        // Hide all
+        secLab.classList.add("hidden");
+        secMed.classList.add("hidden");
+        secPres.classList.add("hidden");
+
+        // Reset tab colors
+        tabLab.className =
+          "flex-1 text-center font-bold text-xs py-3 rounded-lg text-on-surface-variant hover:text-primary transition-all";
+        tabMed.className =
+          "flex-1 text-center font-bold text-xs py-3 rounded-lg text-on-surface-variant hover:text-primary transition-all";
+        tabPres.className =
+          "flex-1 text-center font-bold text-xs py-3 rounded-lg text-on-surface-variant hover:text-primary transition-all";
+
+        // Show selected and activate tab styling
+        if (category === "lab") {
+          secLab.classList.remove("hidden");
+          tabLab.className =
+            "flex-1 text-center font-bold text-xs py-3 rounded-lg bg-primary text-white transition-all shadow-sm";
+        } else if (category === "med") {
+          secMed.classList.remove("hidden");
+          tabMed.className =
+            "flex-1 text-center font-bold text-xs py-3 rounded-lg bg-primary text-white transition-all shadow-sm";
+        } else if (category === "pres") {
+          secPres.classList.remove("hidden");
+          tabPres.className =
+            "flex-1 text-center font-bold text-xs py-3 rounded-lg bg-primary text-white transition-all shadow-sm";
+        }
+      }
+    </script>
+  </body>
+</html>

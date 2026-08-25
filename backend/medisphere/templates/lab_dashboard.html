@@ -1,0 +1,333 @@
+<!doctype html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Lab Dashboard | MediSphere AI</title>
+  {% include 'tailwind_setup.html' %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Inter", sans-serif; background: #f8f9ff; -webkit-font-smoothing: antialiased; }
+    .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; vertical-align: middle; display: inline-block; line-height: 1; }
+    .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border: 1px solid #f1f5f9; box-shadow: 0 4px 24px rgba(0,0,0,0.04); }
+    .field-input { width: 100%; border: 1.5px solid #c3c6d7; border-radius: 12px; padding: 12px 16px; font-size: 15px; transition: border-color .2s, box-shadow .2s; background: #fff; }
+    .field-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(11,28,48,.45); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
+    .modal-backdrop.open { display: flex; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-up { animation: fadeUp .45s ease-out forwards; }
+    .cat-badge { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:9999px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  </style>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- SIDEBAR -->
+  <aside class="h-screen sticky top-0 w-64 flex-col bg-surface border-r border-outline-variant/20 hidden md:flex p-unit-md gap-unit-sm z-50">
+    <div class="mb-unit-xl px-2">
+      <div class="flex items-center gap-2">
+        <h1 class="text-headline-md font-extrabold text-primary">MediSphere</h1>
+      </div>
+      <p class="text-on-surface-variant text-label-sm uppercase tracking-widest mt-1">Laboratory Hub</p>
+    </div>
+    <nav class="flex-1 space-y-1">
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container font-semibold rounded-lg" href="{% url 'lab_dashboard' %}">
+        <span class="material-symbols-outlined">biotech</span>
+        <span class="text-label-md">Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="{% url 'user_profile' %}">
+        <span class="material-symbols-outlined">business</span>
+        <span class="text-label-md">Lab Profile</span>
+      </a>
+    </nav>
+    <div class="mt-auto pt-unit-md border-t border-outline-variant/20">
+      <a class="flex items-center gap-3 px-4 py-2 text-error hover:bg-error/5 rounded-lg" href="{% url 'logout' %}">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="text-label-md">Sign Out</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    <!-- Top bar -->
+    <header class="sticky top-0 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 flex items-center justify-between px-margin-desktop h-16 z-40">
+      <h2 class="text-headline-md font-bold text-on-surface">Lab Management Dashboard</h2>
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:block text-right">
+          <p class="text-label-md font-bold text-on-surface">{{ profile.business_name|default:user.username }}</p>
+          <p class="text-label-sm text-on-surface-variant">Lic: {{ profile.license_number|default:"N/A" }}</p>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-label-md">
+          {{ profile.business_name|first|upper|default:user.username|first|upper }}
+        </div>
+      </div>
+    </header>
+
+    <div class="p-margin-desktop max-w-7xl w-full mx-auto space-y-gutter animate-fade-up">
+
+      <!-- Messages -->
+      {% if messages %}{% for message in messages %}
+        <div class="px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-error-container text-error{% else %}bg-secondary-container/20 text-on-secondary-container{% endif %} text-label-md flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>{{ message }}
+        </div>
+      {% endfor %}{% endif %}
+
+      <!-- Stats -->
+      <section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[24px]">biotech</span></div>
+          <div><p class="text-label-sm text-on-surface-variant uppercase font-bold">Total Tests</p><p class="text-headline-md text-on-surface font-black">{{ total_tests }}</p></div>
+        </div>
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4 border-l-4 border-orange-400">
+          <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500"><span class="material-symbols-outlined text-[24px]">pending_actions</span></div>
+          <div><p class="text-label-sm text-on-surface-variant uppercase font-bold">Pending</p><p class="text-headline-md font-black text-orange-500">{{ pending_appts }}</p></div>
+        </div>
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary"><span class="material-symbols-outlined text-[24px]">event_available</span></div>
+          <div><p class="text-label-sm text-on-surface-variant uppercase font-bold">Confirmed</p><p class="text-headline-md text-on-surface font-black">{{ confirmed_appts }}</p></div>
+        </div>
+        <div class="glass-card rounded-[20px] p-6 flex items-center gap-4">
+          <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600"><span class="material-symbols-outlined text-[24px]">home_health</span></div>
+          <div><p class="text-label-sm text-on-surface-variant uppercase font-bold">Home Collection</p><p class="text-headline-md text-on-surface font-black">{{ home_collection_appts }}</p></div>
+        </div>
+      </section>
+
+      <!-- Two-column layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Test Catalogue (span 2) -->
+        <div class="lg:col-span-2 space-y-gutter">
+          <div class="glass-card rounded-[20px] p-6 md:p-8">
+            <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+              <div>
+                <h3 class="text-headline-md font-bold text-on-surface">Test Catalogue</h3>
+                <p class="text-label-sm text-on-surface-variant">Manage tests, scans, and diagnostics</p>
+              </div>
+              <button onclick="openAddTestModal()" class="bg-primary text-white text-label-md px-4 py-2.5 rounded-xl hover:bg-primary/95 transition-all flex items-center gap-1.5 shadow-md">
+                <span class="material-symbols-outlined text-[18px]">add_circle</span> Add Test / Scan
+              </button>
+            </div>
+
+            <!-- Search + category filter -->
+            <form method="GET" action="{% url 'lab_dashboard' %}" class="mb-4 flex flex-wrap gap-3">
+              <input class="field-input flex-1 min-w-[200px]" name="q" placeholder="Search by test name…" type="text" value="{{ search_q }}">
+              <select name="category" class="field-input w-auto" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for val, label in category_choices %}
+                <option value="{{ val }}" {% if category_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="bg-surface-container border border-outline-variant px-5 rounded-xl hover:bg-surface-container-high font-bold text-label-md transition-colors">Search</button>
+              {% if search_q or category_filter %}<a href="{% url 'lab_dashboard' %}" class="flex items-center px-4 rounded-xl border border-outline-variant hover:bg-error/5 text-error text-label-md">Reset</a>{% endif %}
+            </form>
+
+            {% if lab_tests %}
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-outline-variant/30 text-label-sm font-bold text-on-surface-variant">
+                    <th class="pb-3">Test / Scan Name</th>
+                    <th class="pb-3">Category</th>
+                    <th class="pb-3">Price</th>
+                    <th class="pb-3 text-center">Turnaround</th>
+                    <th class="pb-3 text-center">Home</th>
+                    <th class="pb-3 text-center">Status</th>
+                    <th class="pb-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for test in lab_tests %}
+                  <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/30 transition-colors">
+                    <td class="py-3">
+                      <p class="font-semibold text-on-surface">{{ test.name }}</p>
+                      {% if test.description %}<p class="text-[11px] text-outline mt-0.5 max-w-xs truncate">{{ test.description }}</p>{% endif %}
+                    </td>
+                    <td class="py-3">
+                      <span class="cat-badge
+                        {% if test.category == 'blood_test' %}bg-red-100 text-red-600
+                        {% elif test.category == 'urine_test' %}bg-yellow-100 text-yellow-600
+                        {% elif test.category == 'xray' %}bg-blue-100 text-blue-600
+                        {% elif test.category == 'mri' %}bg-purple-100 text-purple-600
+                        {% elif test.category == 'ct_scan' %}bg-indigo-100 text-indigo-600
+                        {% elif test.category == 'ultrasound' %}bg-green-100 text-green-600
+                        {% elif test.category == 'ecg' %}bg-pink-100 text-pink-600
+                        {% else %}bg-surface-container text-outline{% endif %}">
+                        {{ test.get_category_display }}
+                      </span>
+                    </td>
+                    <td class="py-3 font-semibold text-primary">₹{{ test.price }}</td>
+                    <td class="py-3 text-center text-label-sm text-on-surface-variant">
+                      {% if test.turnaround_hours %}{{ test.turnaround_hours }}h{% else %}—{% endif %}
+                    </td>
+                    <td class="py-3 text-center">
+                      {% if test.is_home_sample_collection %}
+                      <span class="bg-green-100 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded">Yes</span>
+                      {% else %}
+                      <span class="bg-surface-container text-outline text-[10px] font-bold px-2 py-0.5 rounded">No</span>
+                      {% endif %}
+                    </td>
+                    <td class="py-3 text-center">
+                      {% if test.is_available %}
+                      <span class="bg-secondary/10 text-secondary text-[10px] font-bold px-2 py-0.5 rounded">Active</span>
+                      {% else %}
+                      <span class="bg-error/10 text-error text-[10px] font-bold px-2 py-0.5 rounded">Inactive</span>
+                      {% endif %}
+                    </td>
+                    <td class="py-3 text-center">
+                      <form method="POST" action="{% url 'delete_lab_test' test.id %}" onsubmit="return confirm('Remove {{ test.name }}?')">
+                        {% csrf_token %}
+                        <button type="submit" class="p-1.5 text-outline hover:text-error rounded-lg hover:bg-error/5 transition-colors" title="Delete">
+                          <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12 text-on-surface-variant">
+              <span class="material-symbols-outlined text-[48px] text-outline-variant">biotech</span>
+              <p class="text-label-md mt-3">No tests in catalogue.</p>
+              <p class="text-label-sm text-outline">Click "Add Test / Scan" to get started.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Appointments panel -->
+        <div class="space-y-gutter">
+          <div class="glass-card rounded-[20px] p-6">
+            <h3 class="text-headline-md font-bold text-on-surface mb-1">Appointments</h3>
+            <p class="text-label-sm text-on-surface-variant mb-5">All booked appointments</p>
+
+            {% if appointments %}
+            <div class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+              {% for appt in appointments %}
+              <div class="p-4 border border-outline-variant/30 rounded-2xl bg-surface-container-low/50 flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-outline">Appt #{{ appt.id }}</span>
+                  <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase
+                    {% if appt.status == 'pending' %}bg-orange-100 text-orange-500
+                    {% elif appt.status == 'confirmed' %}bg-secondary-container/20 text-on-secondary-container
+                    {% elif appt.status == 'sample_collected' %}bg-primary/10 text-primary
+                    {% elif appt.status == 'report_ready' %}bg-green-100 text-green-600
+                    {% else %}bg-error/10 text-error{% endif %}">
+                    {{ appt.get_status_display }}
+                  </span>
+                </div>
+                <div>
+                  <p class="font-bold text-label-md text-on-surface">{{ appt.lab_test.name }}</p>
+                  <p class="text-[11px] text-on-surface-variant">Patient: <span class="font-semibold">{{ appt.profile.user.get_full_name }}</span></p>
+                </div>
+                <div class="flex items-center gap-3 text-[11px] text-on-surface-variant border-t border-outline-variant/10 pt-2">
+                  <span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[13px]">calendar_today</span>{{ appt.appointment_date }}</span>
+                  {% if appt.appointment_time %}<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[13px]">schedule</span>{{ appt.appointment_time }}</span>{% endif %}
+                  {% if appt.is_home_collection %}<span class="bg-green-100 text-green-600 text-[9px] font-bold px-1.5 py-0.5 rounded">HOME</span>{% endif %}
+                </div>
+                {% if appt.notes %}<p class="text-[10px] italic text-outline border border-outline-variant/10 bg-white p-1.5 rounded-lg">"{{ appt.notes }}"</p>{% endif %}
+                <form method="POST" action="{% url 'update_appointment_status' appt.id %}">
+                  {% csrf_token %}
+                  <select name="status" onchange="this.form.submit()" class="w-full bg-surface border border-outline-variant rounded-lg text-label-sm font-bold py-1.5">
+                    <option value="">Update Status</option>
+                    {% for val, label in appt.STATUS_CHOICES %}
+                    <option value="{{ val }}" {% if appt.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </form>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-10 text-on-surface-variant">
+              <span class="material-symbols-outlined text-[36px] text-outline-variant">event_busy</span>
+              <p class="text-label-sm mt-2 text-outline">No appointments yet.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <footer class="py-unit-lg border-t border-outline-variant flex justify-between items-center text-label-sm text-on-surface-variant">
+        <span class="font-bold text-on-surface">MediSphere</span>
+        <span>© 2026 MediSphere. All rights reserved.</span>
+      </footer>
+    </div>
+  </main>
+
+  <!-- ADD TEST MODAL -->
+  <div class="modal-backdrop" id="addTestModal">
+    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-fade-up">
+      <div class="flex items-center justify-between px-8 py-5 border-b border-outline-variant/30">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center"><span class="material-symbols-outlined">biotech</span></div>
+          <h3 class="text-headline-md font-bold text-on-surface">Add Test / Scan</h3>
+        </div>
+        <button onclick="closeAddTestModal()" class="p-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-all" type="button">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form method="POST" action="{% url 'add_lab_test' %}" class="p-8 space-y-4">
+        {% csrf_token %}
+
+        <div class="space-y-1.5">
+          <label class="text-label-sm text-on-surface-variant">Test / Scan Name <span class="text-error">*</span></label>
+          <input class="field-input" name="name" placeholder="e.g. Complete Blood Count (CBC)" type="text" required>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-label-sm text-on-surface-variant">Category <span class="text-error">*</span></label>
+            <select class="field-input" name="category" required>
+              {% for val, label in category_choices %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-label-sm text-on-surface-variant">Price (INR) <span class="text-error">*</span></label>
+            <input class="field-input" name="price" placeholder="e.g. 350.00" type="number" step="0.01" min="0" required>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-label-sm text-on-surface-variant">Description / Notes</label>
+          <textarea class="field-input resize-none" name="description" placeholder="e.g. Measures red & white blood cells, platelets" rows="2"></textarea>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-label-sm text-on-surface-variant">Turnaround Time (hours)</label>
+          <input class="field-input" name="turnaround_hours" placeholder="e.g. 24" type="number" min="1">
+        </div>
+
+        <div class="space-y-2 py-1">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" name="is_available" class="w-4 h-4 rounded border-outline-variant text-primary" checked>
+            <span class="text-label-md text-on-surface-variant">Mark as Available</span>
+          </label>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" name="is_home_sample_collection" class="w-4 h-4 rounded border-outline-variant text-secondary">
+            <span class="text-label-md text-on-surface-variant">Offer Home Sample Collection</span>
+          </label>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-label-md hover:bg-primary/95 transition-all">Save Test</button>
+          <button type="button" onclick="closeAddTestModal()" class="flex-1 border border-outline-variant text-on-surface-variant py-3 rounded-xl text-label-md hover:bg-surface-container transition-all">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const addTestModal = document.getElementById('addTestModal');
+    function openAddTestModal() { addTestModal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeAddTestModal() { addTestModal.classList.remove('open'); document.body.style.overflow = ''; }
+    addTestModal.addEventListener('click', e => { if (e.target === addTestModal) closeAddTestModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAddTestModal(); });
+  </script>
+</body>
+</html>

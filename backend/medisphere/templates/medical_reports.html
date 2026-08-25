@@ -1,0 +1,491 @@
+<!doctype html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Medical Records | MediSphere</title>
+  <meta name="description" content="View and manage your medical records, reports, and documents in MediSphere.">
+  {% include 'tailwind_setup.html' %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Inter", sans-serif; background-color: #f8fafc; -webkit-font-smoothing: antialiased; }
+    .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; vertical-align: middle; display: inline-block; line-height: 1; }
+    .record-card { transition: border-color 0.2s, box-shadow 0.2s; }
+    .record-card:hover { border-color: #2563eb !important; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .active-pill { background: #2563eb; color: #fff; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    #list-view .record-card { display: flex; flex-direction: row; align-items: center; gap: 16px; }
+    #list-view .card-thumb { width: 64px; height: 64px; flex-shrink: 0; border-radius: 12px; }
+    #list-view .card-body { flex: 1; min-width: 0; }
+  </style>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="h-screen sticky top-0 w-64 flex-col bg-white border-r border-slate-200 hidden md:flex p-4 gap-2 z-50">
+    <div class="mb-6 px-2">
+      <a href="{% url 'landing_page' %}" class="flex items-center gap-2">
+        <h1 class="text-xl font-bold text-primary">MediSphere</h1>
+      </a>
+      <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1">Patient Portal</p>
+    </div>
+    <nav class="flex-1 space-y-1">
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_dashboard' %}">
+        <span class="material-symbols-outlined">dashboard</span><span class="font-label-md text-label-md">Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_profile' %}">
+        <span class="material-symbols-outlined">manage_accounts</span><span class="font-label-md text-label-md">My Profile</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white font-semibold rounded-lg" href="{% url 'medical_reports' %}">
+        <span class="material-symbols-outlined">folder_shared</span><span class="font-label-md text-label-md">Medical Records</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_pharmacy' %}">
+        <span class="material-symbols-outlined">medical_services</span><span class="font-label-md text-label-md">Pharmacy</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_lab' %}">
+        <span class="material-symbols-outlined">biotech</span><span class="font-label-md text-label-md">Lab Tests</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'ai_analyser' %}">
+        <span class="material-symbols-outlined">analytics</span><span class="font-label-md text-label-md">Report Analyzer</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_appointments' %}">
+        <span class="material-symbols-outlined">calendar_month</span><span class="font-label-md text-label-md">Appointments &amp; Orders</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'expenses' %}">
+        <span class="material-symbols-outlined">payments</span><span class="font-label-md text-label-md">Expenses</span>
+      </a>
+    </nav>
+    <div class="mt-auto pt-4 border-t border-slate-200 space-y-1">
+      <a class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg" href="{% url 'logout' %}">
+        <span class="material-symbols-outlined">logout</span><span class="font-label-md text-label-md">Sign Out</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+
+    <!-- Top Nav -->
+    <header class="bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 h-16 flex items-center justify-between px-margin-desktop sticky top-0 z-40">
+      <form method="GET" action="{% url 'medical_reports' %}" class="flex items-center gap-gutter flex-1" id="searchForm">
+        <div class="relative w-full max-w-md">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+          <input id="searchInput" name="q" value="{{ search_q }}"
+            class="w-full bg-surface-container-low border-none rounded-full pl-10 pr-10 py-2 text-label-md focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="Search records, diagnoses, clinics..." type="text" autocomplete="off">
+          {% if search_q %}
+          <a href="{% url 'medical_reports' %}" class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-error transition-colors">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </a>
+          {% endif %}
+        </div>
+        <input type="hidden" name="type" value="{{ current_type }}">
+        <input type="hidden" name="sort" value="{{ current_sort }}">
+        <input type="hidden" name="member" value="{{ current_member }}">
+      </form>
+      <div class="flex items-center gap-4 ml-4">
+        <div class="h-8 w-px bg-outline-variant/30"></div>
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-label-md">
+            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          </div>
+          <div class="text-right hidden sm:block">
+              <p class="font-label-md text-label-md font-bold text-on-surface">
+                {{ user.get_full_name|default:user.username }}
+              </p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">
+                {% if profile %}{{ profile.get_role_display }}{% else %}Member{% endif %}
+              </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="flex-1 overflow-y-auto bg-background">
+      <div class="max-w-container-max-width mx-auto px-margin-desktop py-unit-lg animate-fade-up">
+
+        <!-- Django messages -->
+        {% if messages %}
+          {% for message in messages %}
+          <div class="mb-4 px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-error-container text-error{% else %}bg-secondary-container/20 text-on-secondary-container{% endif %} font-label-md text-label-md flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
+            {{ message }}
+          </div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Page Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <div>
+            <h2 class="text-headline-lg font-headline-lg text-on-background">Medical Records</h2>
+            <p class="text-on-surface-variant text-body-md max-w-xl mt-1">
+              {% if search_q %}
+                Showing results for "<strong>{{ search_q }}</strong>" — {{ documents|length }} found
+              {% else %}
+                {{ total_count }} document{{ total_count|pluralize }} in your clinical vault.
+              {% endif %}
+            </p>
+          </div>
+          <a href="{% url 'upload_document' %}"
+            class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all active:scale-95">
+            <span class="material-symbols-outlined">add_circle</span>
+            Upload New Record
+          </a>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <!-- Type filter tabs -->
+          <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <a href="?type=all&sort={{ current_sort }}&q={{ search_q }}&member={{ current_member }}"
+               class="{% if current_type == 'all' %}active-pill{% else %}bg-surface-container-high text-on-surface-variant hover:bg-primary-container/10 hover:text-primary{% endif %} px-4 py-2 rounded-full text-label-md font-medium whitespace-nowrap transition-colors">
+              All Records
+            </a>
+            {% for val, label in doc_type_choices %}
+            <a href="?type={{ val }}&sort={{ current_sort }}&q={{ search_q }}&member={{ current_member }}"
+               class="{% if current_type == val %}active-pill{% else %}bg-surface-container-high text-on-surface-variant hover:bg-primary-container/10 hover:text-primary{% endif %} px-4 py-2 rounded-full text-label-md font-medium whitespace-nowrap transition-colors">
+              {{ label }}
+            </a>
+            {% endfor %}
+          </div>
+
+          <!-- Sort + View toggle -->
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- Member Filter dropdown -->
+            <form method="GET" action="{% url 'medical_reports' %}" id="memberFilterForm">
+              <input type="hidden" name="q" value="{{ search_q }}">
+              <input type="hidden" name="type" value="{{ current_type }}">
+              <input type="hidden" name="sort" value="{{ current_sort }}">
+              <select name="member" onchange="document.getElementById('memberFilterForm').submit()"
+                class="bg-surface border border-outline-variant rounded-xl px-3 py-2 text-label-md font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer">
+                <option value="" {% if not current_member %}selected{% endif %}>All Patients</option>
+                <option value="myself" {% if current_member == 'myself' %}selected{% endif %}>Myself</option>
+                {% for fm in family_members %}
+                  <option value="{{ fm.id }}" {% if current_member == fm.id|stringformat:"s" %}selected{% endif %}>{{ fm.full_name }}</option>
+                {% endfor %}
+              </select>
+            </form>
+
+            <!-- Sort dropdown -->
+            <form method="GET" action="{% url 'medical_reports' %}" id="sortForm">
+              <input type="hidden" name="q" value="{{ search_q }}">
+              <input type="hidden" name="type" value="{{ current_type }}">
+              <input type="hidden" name="member" value="{{ current_member }}">
+              <select name="sort" onchange="document.getElementById('sortForm').submit()"
+                class="bg-surface border border-outline-variant rounded-xl px-3 py-2 text-label-md font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer">
+                <option value="-document_date" {% if current_sort == '-document_date' %}selected{% endif %}>Newest First</option>
+                <option value="document_date"  {% if current_sort == 'document_date'  %}selected{% endif %}>Oldest First</option>
+                <option value="name"           {% if current_sort == 'name'           %}selected{% endif %}>Name A–Z</option>
+                <option value="-name"          {% if current_sort == '-name'          %}selected{% endif %}>Name Z–A</option>
+                <option value="member__full_name" {% if current_sort == 'member__full_name' %}selected{% endif %}>Patient A–Z</option>
+                <option value="-member__full_name" {% if current_sort == '-member__full_name' %}selected{% endif %}>Patient Z–A</option>
+                <option value="-uploaded_at"   {% if current_sort == '-uploaded_at'   %}selected{% endif %}>Recently Uploaded</option>
+              </select>
+            </form>
+
+            <!-- Grid / List toggle -->
+            <div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl border border-outline-variant/30">
+              <button id="btn-grid" onclick="setView('grid')" class="p-2 bg-white shadow-sm text-primary rounded-lg transition-all">
+                <span class="material-symbols-outlined">grid_view</span>
+              </button>
+              <button id="btn-list" onclick="setView('list')" class="p-2 text-on-surface-variant hover:text-primary transition-colors rounded-lg">
+                <span class="material-symbols-outlined">list</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== DOCUMENT CARDS ===== -->
+        {% if documents %}
+        <div id="grid-view" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {% for doc in documents %}
+          <div class="record-card bg-white border border-outline-variant/30 rounded-[20px] overflow-hidden group" data-id="{{ doc.id }}">
+
+            <!-- Thumbnail / Icon area -->
+            <div class="h-36 bg-surface-container-low flex items-center justify-center relative">
+              {% if doc.file and doc.file_extension == 'jpg' or doc.file and doc.file_extension == 'jpeg' or doc.file and doc.file_extension == 'png' %}
+                <img src="{{ doc.file.url }}" class="w-full h-full object-cover" alt="{{ doc.name }}">
+              {% else %}
+                <span class="material-symbols-outlined text-[56px] {% if doc.document_type == 'lab_report' %}text-secondary/30{% elif doc.document_type == 'imaging' %}text-primary/30{% elif doc.document_type == 'vaccination' %}text-green-500/30{% elif doc.document_type == 'prescription' %}text-orange-400/30{% else %}text-outline/30{% endif %}">
+                  {{ doc.type_icon }}
+                </span>
+              {% endif %}
+
+              <!-- Hover overlay -->
+              <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3">
+                {% if doc.file %}
+                <a href="{{ doc.file.url }}" target="_blank"
+                   class="text-white text-label-sm font-bold flex items-center gap-1 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/30 hover:bg-white/30 transition-colors">
+                  <span class="material-symbols-outlined text-[16px]">download</span> Download
+                </a>
+                {% else %}
+                <span></span>
+                {% endif %}
+                <form method="POST" action="{% url 'delete_document' doc.id %}" onsubmit="return confirm('Delete {{ doc.name }}?')">
+                  {% csrf_token %}
+                  <button type="submit" class="text-white text-label-sm flex items-center gap-1 bg-error/70 backdrop-blur-md px-2 py-1.5 rounded-lg border border-white/20 hover:bg-error transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                </form>
+              </div>
+
+              <!-- Status indicator badge -->
+              <div class="absolute bottom-2 left-2">
+                {% if doc.has_abnormal %}
+                <span class="bg-error/90 text-white px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase flex items-center gap-1 shadow-md backdrop-blur-md">
+                  <span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1">warning</span> Risk Warning
+                </span>
+                {% else %}
+                <span class="bg-green-600/90 text-white px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase flex items-center gap-1 shadow-md backdrop-blur-md">
+                  <span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1">check_circle</span> Good / Normal
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Card body -->
+            <div class="p-4">
+              <div class="flex items-start justify-between mb-1.5">
+                <h3 class="font-bold text-on-surface text-label-md truncate flex-1">{{ doc.name }}</h3>
+              </div>
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <span class="bg-surface-container text-on-surface-variant px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                  {{ doc.get_document_type_display }}
+                </span>
+                {% if doc.member %}
+                <span class="bg-primary-container/10 text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-0.5">
+                  <span class="material-symbols-outlined text-[10px]">group</span>
+                  {{ doc.member.full_name }}
+                </span>
+                {% else %}
+                <span class="bg-secondary-container/20 text-secondary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-0.5">
+                  <span class="material-symbols-outlined text-[10px]">person</span>
+                  Myself
+                </span>
+                {% endif %}
+                {% if doc.document_date %}
+                <span class="text-on-surface-variant text-[11px]">{{ doc.document_date|date:"M d, Y" }}</span>
+                {% endif %}
+              </div>
+              {% if doc.facility %}
+              <div class="flex items-center gap-1.5 text-on-surface-variant text-label-sm">
+                <span class="material-symbols-outlined text-[14px]">local_hospital</span>
+                <span class="truncate">{{ doc.facility }}</span>
+              </div>
+              {% endif %}
+              {% if doc.notes %}
+              <p class="text-[11px] text-outline mt-2 line-clamp-2">{{ doc.notes }}</p>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- List view (hidden by default) -->
+        <div id="list-view" class="hidden space-y-3">
+          {% for doc in documents %}
+          <div class="record-card bg-white border border-outline-variant/30 rounded-2xl overflow-hidden flex items-center gap-4 px-5 py-4 group">
+            <div class="w-14 h-14 rounded-xl bg-surface-container-low flex items-center justify-center flex-shrink-0">
+              {% if doc.file and doc.file_extension in 'jpg,jpeg,png' %}
+                <img src="{{ doc.file.url }}" class="w-full h-full object-cover rounded-xl" alt="">
+              {% else %}
+                <span class="material-symbols-outlined text-[28px] {{ doc.type_color }}">{{ doc.type_icon }}</span>
+              {% endif %}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <p class="font-bold text-on-surface text-label-md truncate">{{ doc.name }}</p>
+                {% if doc.has_abnormal %}
+                <span class="bg-error/10 text-error border border-error/20 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[12px]" style="font-variation-settings:'FILL' 1">warning</span> Risk Warning
+                </span>
+                {% else %}
+                <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[12px]" style="font-variation-settings:'FILL' 1">check_circle</span> Good
+                </span>
+                {% endif %}
+              </div>
+              <div class="flex flex-wrap items-center gap-3 text-[11px] text-on-surface-variant">
+                <span class="bg-surface-container px-2 py-0.5 rounded font-bold uppercase tracking-wide">{{ doc.get_document_type_display }}</span>
+                {% if doc.member %}
+                <span class="bg-primary-container/10 text-primary px-2 py-0.5 rounded font-bold uppercase tracking-wide flex items-center gap-0.5">
+                  <span class="material-symbols-outlined text-[12px]">group</span>
+                  {{ doc.member.full_name }}
+                </span>
+                {% else %}
+                <span class="bg-secondary-container/20 text-secondary px-2 py-0.5 rounded font-bold uppercase tracking-wide flex items-center gap-0.5">
+                  <span class="material-symbols-outlined text-[12px]">person</span>
+                  Myself
+                </span>
+                {% endif %}
+                {% if doc.document_date %}<span>{{ doc.document_date|date:"M d, Y" }}</span>{% endif %}
+                {% if doc.facility %}<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">local_hospital</span>{{ doc.facility }}</span>{% endif %}
+              </div>
+            </div>
+            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              {% if doc.file %}
+              <a href="{{ doc.file.url }}" target="_blank" class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Download">
+                <span class="material-symbols-outlined text-[18px]">download</span>
+              </a>
+              {% endif %}
+              <form method="POST" action="{% url 'delete_document' doc.id %}" onsubmit="return confirm('Delete {{ doc.name }}?')">
+                {% csrf_token %}
+                <button type="submit" class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors" title="Delete">
+                  <span class="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- Empty state -->
+        <div class="flex flex-col items-center justify-center py-24 text-center">
+          <div class="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mb-6">
+            <span class="material-symbols-outlined text-[40px] text-outline">folder_open</span>
+          </div>
+          <h3 class="font-headline-md text-headline-md text-on-surface mb-2">No records found</h3>
+          <p class="text-on-surface-variant text-body-md mb-6 max-w-sm">
+            {% if search_q %}No documents match your search "{{ search_q }}". Try different keywords.
+            {% elif current_type != 'all' %}No {{ current_type|title }} records yet.
+            {% else %}Start building your medical record vault by uploading your first document.{% endif %}
+          </p>
+          <a href="{% url 'upload_document' %}"
+            class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition-all active:scale-95">
+            <span class="material-symbols-outlined">add_circle</span>
+            Upload First Record
+          </a>
+        </div>
+        {% endif %}
+
+        <!-- Timeline section (only show when we have docs) -->
+        {% if documents %}
+        <div class="mt-16 mb-8">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-headline-md font-headline-md text-on-background">Timeline</h3>
+            <span class="text-on-surface-variant text-label-md">{{ documents|length }} record{{ documents|length|pluralize }}</span>
+          </div>
+          <div class="relative">
+            <div class="absolute left-4 md:left-5 top-0 bottom-0 w-0.5 bg-outline-variant/30"></div>
+            <div class="space-y-8">
+              {% for doc in documents %}
+              <div class="relative flex items-start gap-6 pl-14">
+                <!-- Dot -->
+                <div class="absolute left-1.5 w-7 h-7 bg-{% if doc.document_type == 'lab_report' %}secondary{% elif doc.document_type == 'imaging' %}primary{% elif doc.document_type == 'vaccination' %}green-500{% else %}primary-container{% endif %} rounded-full border-4 border-white shadow-md flex items-center justify-center z-10">
+                  <span class="material-symbols-outlined text-white text-[12px]" style="font-variation-settings:'FILL' 1">circle</span>
+                </div>
+                <!-- Card -->
+                <div class="flex-1 bg-white/70 backdrop-blur-sm border border-outline-variant/30 rounded-2xl p-5 hover:border-primary/30 transition-colors">
+                  <div class="flex items-start justify-between mb-2">
+                    <div>
+                      <p class="text-primary font-bold text-label-sm uppercase tracking-wider mb-1 flex items-center gap-1.5 flex-wrap">
+                        {% if doc.document_date %}{{ doc.document_date|date:"F d, Y" }}{% else %}Date not set{% endif %}
+                        <span class="text-outline-variant">•</span>
+                        {% if doc.member %}
+                        <span class="inline-flex items-center gap-0.5 text-primary">
+                          <span class="material-symbols-outlined text-[12px]">group</span>
+                          {{ doc.member.full_name }}
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-0.5 text-secondary">
+                          <span class="material-symbols-outlined text-[12px]">person</span>
+                          Myself
+                        </span>
+                        {% endif %}
+                      </p>
+                      <h4 class="font-bold text-on-surface text-label-md">{{ doc.name }}</h4>
+                    </div>
+                    <span class="bg-surface-container text-on-surface-variant text-[10px] font-bold uppercase px-2 py-0.5 rounded">{{ doc.get_document_type_display }}</span>
+                  </div>
+                  {% if doc.facility %}
+                  <p class="text-on-surface-variant text-label-sm flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">local_hospital</span> {{ doc.facility }}
+                  </p>
+                  {% endif %}
+                  {% if doc.notes %}
+                  <p class="text-on-surface-variant text-label-sm mt-2 leading-relaxed">{{ doc.notes }}</p>
+                  {% endif %}
+                  {% if doc.file %}
+                  <div class="mt-3 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[16px]">description</span>
+                    <a href="{{ doc.file.url }}" target="_blank" class="text-primary text-label-sm hover:underline">
+                      {{ doc.file.name|slice:":" }}
+                    </a>
+                  </div>
+                  {% endif %}
+                  {% if doc.has_abnormal %}
+                  <div class="mt-3 bg-error-container/30 border border-error/20 rounded-xl px-3.5 py-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-error text-[18px]" style="font-variation-settings:'FILL' 1">warning</span>
+                    <div>
+                      <span class="text-error text-label-sm font-extrabold uppercase tracking-wide">Risk Warning:</span>
+                      <span class="text-error text-label-sm font-medium ml-1">Abnormal clinical parameters detected</span>
+                    </div>
+                  </div>
+                  {% else %}
+                  <div class="mt-3 bg-green-50 border border-green-200 rounded-xl px-3.5 py-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-green-600 text-[18px]" style="font-variation-settings:'FILL' 1">check_circle</span>
+                    <div>
+                      <span class="text-green-700 text-label-sm font-extrabold uppercase tracking-wide">Good / Normal:</span>
+                      <span class="text-green-700 text-label-sm font-medium ml-1">All clinical parameters within healthy baseline limits</span>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ── View toggle (grid / list) ──
+    const gridView = document.getElementById('grid-view');
+    const listView = document.getElementById('list-view');
+    const btnGrid = document.getElementById('btn-grid');
+    const btnList = document.getElementById('btn-list');
+
+    function setView(v) {
+      if (v === 'grid') {
+        gridView.classList.remove('hidden');
+        listView.classList.add('hidden');
+        btnGrid.classList.add('bg-white','shadow-sm','text-primary');
+        btnList.classList.remove('bg-white','shadow-sm','text-primary');
+        btnList.classList.add('text-on-surface-variant');
+        localStorage.setItem('recordView', 'grid');
+      } else {
+        gridView.classList.add('hidden');
+        listView.classList.remove('hidden');
+        btnList.classList.add('bg-white','shadow-sm','text-primary');
+        btnGrid.classList.remove('bg-white','shadow-sm','text-primary');
+        btnGrid.classList.add('text-on-surface-variant');
+        localStorage.setItem('recordView', 'list');
+      }
+    }
+
+    // Restore last view preference
+    const savedView = localStorage.getItem('recordView') || 'grid';
+    setView(savedView);
+
+    // ── Live search (debounced) ──
+    let searchTimer;
+    const searchInput = document.getElementById('searchInput');
+    searchInput?.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        document.getElementById('searchForm').submit();
+      }, 500);
+    });
+  </script>
+</body>
+</html>

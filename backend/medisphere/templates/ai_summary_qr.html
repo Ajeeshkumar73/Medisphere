@@ -1,0 +1,264 @@
+<!doctype html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Emergency AI Summary - {{ ai_summary.name }} | MediSphere</title>
+  {% include 'tailwind_setup.html' %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+    .material-symbols-outlined { vertical-align: middle; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 pb-12">
+
+  <!-- Top Emergency Header -->
+  <header class="bg-blue-900 text-white py-4 px-6 shadow-md border-b-4 border-red-500 sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-red-400 text-3xl font-extrabold">local_hospital</span>
+        <div>
+          <h1 class="text-xl font-extrabold tracking-tight">MediSphere Clinical Summary</h1>
+          <p class="text-xs text-blue-200 uppercase font-semibold">Emergency Health Profile &amp; AI Analysis</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 no-print">
+        <button onclick="window.print()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors border border-white/20">
+          <span class="material-symbols-outlined text-[16px]">print</span> Print Summary
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
+
+    <!-- Member Identity & Emergency Contact Card -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-2xl shadow-md">
+          {{ ai_summary.name|slice:":1"|upper }}
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-2xl font-extrabold text-slate-900">{{ ai_summary.name }}</h2>
+            <span class="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-bold uppercase">
+              ID: {{ ai_summary.patient_code }}
+            </span>
+          </div>
+          <p class="text-sm text-slate-600 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 font-medium">
+            <span><strong>Age:</strong> {{ ai_summary.age }}</span>
+            <span>•</span>
+            <span><strong>Gender:</strong> {{ ai_summary.gender }}</span>
+            <span>•</span>
+            <span class="text-red-600 font-extrabold"><strong>Blood Group:</strong> {{ ai_summary.blood_group }}</span>
+            <span>•</span>
+            <span><strong>BMI:</strong> {{ ai_summary.bmi }} ({{ ai_summary.bmi_status }})</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Emergency Phone Pill -->
+      <div class="w-full md:w-auto bg-red-50 border-2 border-red-200 p-4 rounded-xl flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <span class="material-symbols-outlined text-xl">phone_in_talk</span>
+        </div>
+        <div>
+          <p class="text-[11px] font-extrabold uppercase text-red-600 tracking-wider">Emergency Contact</p>
+          <p class="text-sm font-bold text-slate-900">{{ ai_summary.emergency_contact }}</p>
+          <a href="tel:{{ ai_summary.emergency_phone }}" class="text-xs font-extrabold text-red-700 hover:underline">
+            {{ ai_summary.emergency_phone }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health Index Score & Executive Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <!-- Health Score Gauge -->
+      <div class="md:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+        <div class="relative w-28 h-28 flex items-center justify-center mb-3">
+          <svg class="w-full h-full -rotate-90">
+            <circle class="text-slate-100" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-width="10"></circle>
+            <circle class="text-blue-600" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-dasharray="301" stroke-dashoffset="{{ 301|add:'-250' }}" stroke-width="10" stroke-linecap="round"></circle>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-2xl font-extrabold text-blue-900">{{ ai_summary.health_index_score }}</span>
+            <span class="text-[10px] text-slate-400 font-bold uppercase">Index Score</span>
+          </div>
+        </div>
+        <h4 class="font-bold text-slate-800 text-sm">Health Baseline Index</h4>
+        <p class="text-xs text-slate-500 mt-1">Calculated from profile vitals, active diseases &amp; clinical lab parameters.</p>
+      </div>
+
+      <!-- General AI Summary -->
+      <div class="md:col-span-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-blue-600 text-xl">psychology</span>
+            <h3 class="text-base font-extrabold text-slate-900">AI Clinical Executive Summary</h3>
+          </div>
+          <p class="text-xs text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200 font-medium">
+            {{ ai_summary.general_summary }}
+          </p>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100">
+          <span>Doctor: <strong>{{ ai_summary.doctor_name }}</strong> ({{ ai_summary.doctor_spec }})</span>
+          <span>Hospital: <strong>{{ ai_summary.doctor_hospital }}</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warnings & Allergies Alert Box -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex items-center gap-2.5 mb-4">
+        <div class="p-2 bg-red-100 text-red-700 rounded-lg">
+          <span class="material-symbols-outlined text-xl">warning</span>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900">Warnings, Allergies &amp; Out-of-Range Flags</h3>
+          <p class="text-xs text-slate-500">Critical clinical flags requiring immediate medical attention</p>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        {% for w in ai_summary.warnings %}
+        <div class="p-4 rounded-xl border-l-4 {% if w.type == 'allergy' %}bg-red-50 border-red-500 text-red-900{% elif w.type == 'abnormal_doc' %}bg-amber-50 border-amber-500 text-amber-900{% elif w.type == 'condition' %}bg-blue-50 border-blue-500 text-blue-900{% else %}bg-green-50 border-green-500 text-green-900{% endif %}">
+          <div class="flex items-center gap-2 font-bold text-sm">
+            <span class="material-symbols-outlined text-lg">
+              {% if w.type == 'allergy' %}pill{% elif w.type == 'abnormal_doc' %}error{% elif w.type == 'condition' %}medical_information{% else %}check_circle{% endif %}
+            </span>
+            {{ w.title }}
+          </div>
+          <p class="text-xs mt-1 font-medium leading-relaxed">{{ w.message }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Medical Condition & Disease Treatment -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-blue-600 text-xl">healing</span>
+          <h3 class="text-base font-extrabold text-slate-900">Medical Condition &amp; Treatment</h3>
+        </div>
+        {% if ai_summary.disease_name %}
+        <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-extrabold text-blue-900">Diagnosed Condition:</span>
+            <span class="font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">{{ ai_summary.disease_name }}</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-extrabold text-blue-900">Treatment Duration:</span>
+            <span class="font-bold text-slate-700">{{ ai_summary.treatment_years }} year(s)</span>
+          </div>
+          {% if ai_summary.medical_notes %}
+          <div class="pt-2 border-t border-blue-200/50">
+            <p class="text-[11px] text-slate-600"><strong>Notes:</strong> {{ ai_summary.medical_notes }}</p>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-500 py-4 text-center">No active chronic medical condition recorded in member profile.</p>
+        {% endif %}
+      </div>
+
+      <!-- Primary Consultant Doctor Details -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-blue-600 text-xl">stethoscope</span>
+          <h3 class="text-base font-extrabold text-slate-900">Primary Consultant Doctor</h3>
+        </div>
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+          <p class="flex justify-between">
+            <span class="text-slate-500 font-semibold">Doctor Name:</span>
+            <span class="font-bold text-slate-900">{{ ai_summary.doctor_name }}</span>
+          </p>
+          <p class="flex justify-between">
+            <span class="text-slate-500 font-semibold">Specialization:</span>
+            <span class="font-bold text-slate-900">{{ ai_summary.doctor_spec }}</span>
+          </p>
+          <p class="flex justify-between">
+            <span class="text-slate-500 font-semibold">Hospital / Clinic:</span>
+            <span class="font-bold text-slate-900">{{ ai_summary.doctor_hospital }}</span>
+          </p>
+          <p class="flex justify-between">
+            <span class="text-slate-500 font-semibold">Contact Phone:</span>
+            <a href="tel:{{ ai_summary.doctor_phone }}" class="font-bold text-blue-600 hover:underline">{{ ai_summary.doctor_phone }}</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Clinical Parameters Table -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-symbols-outlined text-blue-600 text-xl">tune</span>
+        <h3 class="text-base font-extrabold text-slate-900">Key Health Parameters</h3>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {% for param in ai_summary.key_parameters %}
+        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-500">{{ param.label }}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase {% if param.status == 'warning' %}bg-amber-100 text-amber-800{% else %}bg-green-100 text-green-800{% endif %}">
+                {{ param.status }}
+              </span>
+            </div>
+            <p class="text-sm font-extrabold text-slate-900">{{ param.value }}</p>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-200/60">{{ param.detail }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Analyzed Documents List -->
+    {% if ai_summary.doc_list %}
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-blue-600 text-xl">folder_shared</span>
+          <h3 class="text-base font-extrabold text-slate-900">Analyzed Clinical Vault Documents</h3>
+        </div>
+        <span class="text-xs font-bold text-slate-500">{{ ai_summary.total_docs }} document(s)</span>
+      </div>
+      <div class="divide-y divide-slate-100">
+        {% for doc in ai_summary.doc_list %}
+        <div class="py-3 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-blue-600">description</span>
+            <div>
+              <p class="text-xs font-bold text-slate-800">{{ doc.name }}</p>
+              <p class="text-[11px] text-slate-500">{{ doc.get_document_type_display }} • {{ doc.facility|default:"Lab Record" }} • {{ doc.document_date|date:"M d, Y"|default:"Recent" }}</p>
+            </div>
+          </div>
+          {% if doc.has_abnormal %}
+          <span class="px-2.5 py-1 bg-red-100 text-red-800 text-[10px] font-extrabold rounded-full flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">warning</span> Flagged
+          </span>
+          {% else %}
+          <span class="px-2.5 py-1 bg-green-100 text-green-800 text-[10px] font-extrabold rounded-full flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">check_circle</span> Normal
+          </span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-4 mt-8 text-center text-xs text-slate-400">
+    <p>MediSphere Health Information Vault &copy; 2026. This summary is generated from member profile baseline records and AI clinical document scanning.</p>
+  </footer>
+</body>
+</html>

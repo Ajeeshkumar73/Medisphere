@@ -1,0 +1,561 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>AI Medical Report Analyser &amp; Health Summary | MediSphere</title>
+    {% include 'tailwind_setup.html' %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <style>
+      body { font-family: "Inter", sans-serif; background-color: #f8fafc; -webkit-font-smoothing: antialiased; }
+      .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; vertical-align: middle; }
+      .active-pill { background: #2563eb; color: #fff; }
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+  </head>
+  <body class="bg-background text-on-surface font-body-md overflow-x-hidden min-h-screen flex">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="h-screen sticky top-0 w-64 flex-col bg-white border-r border-slate-200 hidden md:flex p-4 gap-2 z-40">
+      <div class="mb-6 px-2">
+        <a href="{% url 'landing_page' %}" class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-primary">MediSphere</h1>
+        </a>
+        <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1">Patient Vault</p>
+      </div>
+      <nav class="flex-1 space-y-1">
+        <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_dashboard' %}">
+          <span class="material-symbols-outlined">dashboard</span><span class="text-sm font-medium">Dashboard</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_profile' %}">
+          <span class="material-symbols-outlined">manage_accounts</span><span class="text-sm font-medium">My Profile</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'medical_reports' %}">
+          <span class="material-symbols-outlined">folder_shared</span><span class="text-sm font-medium">Medical Records</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white font-semibold rounded-lg shadow-sm" href="{% url 'ai_analyser' %}">
+          <span class="material-symbols-outlined">analytics</span><span class="text-sm font-medium">AI Analyser &amp; Summary</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_pharmacy' %}">
+          <span class="material-symbols-outlined">medical_services</span><span class="text-sm font-medium">Pharmacy</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_lab' %}">
+          <span class="material-symbols-outlined">biotech</span><span class="text-sm font-medium">Lab Tests</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'user_appointments' %}">
+          <span class="material-symbols-outlined">calendar_today</span><span class="text-sm font-medium">Appointments &amp; Orders</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" href="{% url 'expenses' %}">
+          <span class="material-symbols-outlined">payments</span><span class="text-sm font-medium">Expenses</span>
+        </a>
+      </nav>
+      <div class="mt-auto pt-4 border-t border-slate-200 space-y-1">
+        <a class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg" href="{% url 'logout' %}">
+          <span class="material-symbols-outlined">logout</span><span class="text-sm font-medium">Sign Out</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">
+      <!-- Top Header -->
+      <header class="flex justify-between items-center w-full px-6 h-16 sticky top-0 bg-white border-b border-slate-200 shadow-sm z-30">
+        <div class="flex items-center gap-4 flex-1">
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            AI Clinical Analyser
+          </h2>
+        </div>
+        <div class="flex items-center gap-4">
+          <button onclick="openUploadModal()" class="px-4 py-2 bg-primary text-white rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-blue-700 transition-all shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">cloud_upload</span> Upload Document
+          </button>
+          <div class="h-8 w-px bg-slate-200"></div>
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-sm">
+              {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            </div>
+            <div class="text-right hidden sm:block">
+              <p class="font-bold text-xs text-slate-800">{{ user.get_full_name|default:user.username }}</p>
+              <p class="text-[11px] text-slate-500">{% if profile %}{{ profile.get_role_display }}{% else %}Member{% endif %}</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Scrollable Main View -->
+      <div class="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
+        <div class="max-w-6xl mx-auto space-y-6">
+
+          <!-- Django Flash Messages -->
+          {% if messages %}
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% else %}bg-green-50 border border-green-200 text-green-800{% endif %} font-medium text-xs flex items-center gap-2 shadow-sm">
+              <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
+              {{ message }}
+            </div>
+            {% endfor %}
+          {% endif %}
+
+          <!-- Page Header & Member Selector Bar -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-bold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-sm">badge</span> Code: {{ ai_summary.patient_code }}
+                </span>
+                <span class="px-3 py-1 bg-green-50 border border-green-200 text-green-700 rounded-full text-xs font-bold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-sm">verified</span> Clinical Vault Verified
+                </span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-slate-900 mt-2">
+                AI Health Summary &amp; Diagnostic Analyser
+              </h2>
+              <p class="text-slate-500 text-xs mt-1">
+                Synthesized baseline summary for <strong class="text-slate-800">{{ ai_summary.name }}</strong> combining vitals, active medical conditions, allergies, disease treatments, and uploaded lab &amp; imaging reports.
+              </p>
+            </div>
+
+            <!-- Member Switcher Form -->
+            <div class="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <form method="GET" action="{% url 'ai_analyser' %}" id="memberSwitchForm">
+                <div class="relative">
+                  <select name="member" onchange="document.getElementById('memberSwitchForm').submit()"
+                          class="w-full sm:w-60 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer shadow-sm">
+                    <option value="myself" {% if selected_member_type == 'myself' %}selected{% endif %}>
+                      👤 Myself ({{ profile.user.get_full_name|default:profile.user.username }})
+                    </option>
+                    {% for fm in family_members %}
+                    <option value="{{ fm.id }}" {% if selected_member_type == 'member' and selected_member_id == fm.id %}selected{% endif %}>
+                      👥 {{ fm.full_name }} ({{ fm.get_relation_display }})
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Top Grid: Health Score Gauge, Profile Details, Actions & QR Modal trigger -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            
+            <!-- Health Score Gauge (4 cols) -->
+            <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-between text-center">
+              <div>
+                <span class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Health Index Score</span>
+                <div class="relative w-36 h-36 mx-auto my-4 flex items-center justify-center">
+                  <svg class="w-full h-full -rotate-90">
+                    <circle class="text-slate-100" cx="72" cy="72" fill="transparent" r="60" stroke="currentColor" stroke-width="12"></circle>
+                    <circle class="text-primary" cx="72" cy="72" fill="transparent" r="60" stroke="currentColor" stroke-dasharray="377" stroke-dashoffset="{{ 377|add:'-300' }}" stroke-width="12" stroke-linecap="round"></circle>
+                  </svg>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-3xl font-extrabold text-slate-900">{{ ai_summary.health_index_score }}</span>
+                    <span class="text-[10px] text-slate-400 font-bold">/ 100 MAX</span>
+                  </div>
+                </div>
+                <h3 class="font-bold text-slate-900 text-sm">
+                  {% if ai_summary.health_index_score >= 85 %}
+                    <span class="text-green-600 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-sm">check_circle</span> Optimal Health Baseline</span>
+                  {% elif ai_summary.health_index_score >= 65 %}
+                    <span class="text-amber-600 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-sm">warning</span> Moderate Parameters Flagged</span>
+                  {% else %}
+                    <span class="text-red-600 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-sm">error</span> Attention &amp; Doctor Review Required</span>
+                  {% endif %}
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-2 px-2">
+                  Dynamic score calculated from vitals, abnormal lab parameters, allergy warnings &amp; active disease treatments.
+                </p>
+              </div>
+
+              <!-- Share & Download Buttons -->
+              <div class="w-full space-y-2 mt-6 pt-4 border-t border-slate-100">
+                <a href="{{ download_url }}" target="_blank" class="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-sm">
+                  <span class="material-symbols-outlined text-[16px]">download</span> Download AI Summary PDF
+                </a>
+                <button onclick="openQrModal()" class="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-200 transition-all border border-slate-200">
+                  <span class="material-symbols-outlined text-[16px]">qr_code_2</span> Emergency QR Scan Card
+                </button>
+              </div>
+            </div>
+
+            <!-- Profile Info & Vitals Grid (8 cols) -->
+            <div class="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-blue-100 text-primary flex items-center justify-center font-extrabold text-xl shadow-sm">
+                      {{ ai_summary.name|slice:":1"|upper }}
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-bold text-slate-900">{{ ai_summary.name }}</h3>
+                      <p class="text-xs text-slate-500">Patient ID: <strong class="text-slate-800">{{ ai_summary.patient_code }}</strong></p>
+                    </div>
+                  </div>
+                  <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold">
+                    {{ ai_summary.gender }} • {{ ai_summary.age }} Yrs
+                  </span>
+                </div>
+
+                <!-- Vitals & Medical Meta Matrix -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                  <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Blood Group</span>
+                    <span class="text-sm font-extrabold text-red-600 mt-0.5 block">{{ ai_summary.blood_group }}</span>
+                  </div>
+                  <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">BMI / Status</span>
+                    <span class="text-xs font-extrabold text-slate-800 mt-0.5 block">{{ ai_summary.bmi|default:"22.4" }} <span class="text-[10px] font-normal text-slate-500">({{ ai_summary.bmi_status }})</span></span>
+                  </div>
+                  <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Height / Weight</span>
+                    <span class="text-xs font-extrabold text-slate-800 mt-0.5 block">{{ ai_summary.height_cm }} cm / {{ ai_summary.weight_kg }} kg</span>
+                  </div>
+                  <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Vault Docs</span>
+                    <span class="text-xs font-extrabold text-slate-800 mt-0.5 block">{{ ai_summary.total_docs }} Record(s)</span>
+                  </div>
+                </div>
+
+                <!-- Executive Summary Paragraph -->
+                <div class="p-4 bg-blue-50/70 border border-blue-100 rounded-xl mb-4">
+                  <h4 class="text-xs font-bold text-blue-900 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">psychology</span> Executive AI Summary Overview
+                  </h4>
+                  <p class="text-xs text-slate-700 leading-relaxed font-medium">
+                    {{ ai_summary.general_summary }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Primary Consultant & Emergency Contact bar -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-xs">
+                <div class="flex items-center gap-2.5">
+                  <span class="material-symbols-outlined text-red-600 bg-red-50 p-2 rounded-lg">phone_in_talk</span>
+                  <div>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase block">Emergency Contact</span>
+                    <span class="font-bold text-slate-800">{{ ai_summary.emergency_contact }}</span> ({{ ai_summary.emergency_phone }})
+                  </div>
+                </div>
+                <div class="flex items-center gap-2.5">
+                  <span class="material-symbols-outlined text-blue-600 bg-blue-50 p-2 rounded-lg">stethoscope</span>
+                  <div>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase block">Primary Doctor</span>
+                    <span class="font-bold text-slate-800">{{ ai_summary.doctor_name }}</span> ({{ ai_summary.doctor_hospital }})
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Section 2: Code Upload Doc + Warnings & Out-of-Range Flags -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Direct Upload Document Card (5 cols) -->
+            <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-primary text-xl">upload_file</span>
+                  <h3 class="text-base font-extrabold text-slate-900">Upload &amp; Scan New Document</h3>
+                </div>
+                <p class="text-xs text-slate-500 mb-4">
+                  Upload lab reports, prescriptions, or imaging files to instantly re-analyze and update {{ ai_summary.name }}'s AI summary.
+                </p>
+
+                <form method="POST" action="{% url 'ai_analyser' %}" enctype="multipart/form-data" class="space-y-3">
+                  {% csrf_token %}
+                  <input type="hidden" name="target_member_type" value="{{ selected_member_type }}">
+                  <input type="hidden" name="target_member_id" value="{{ selected_member_id }}">
+
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-700 block mb-1">Document Title / Name</label>
+                    <input type="text" name="name" placeholder="e.g. Complete Blood Count (CBC)" required
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="text-[11px] font-bold text-slate-700 block mb-1">Category</label>
+                      <select name="document_type" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                        {% for val, label in doc_type_choices %}
+                        <option value="{{ val }}">{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div>
+                      <label class="text-[11px] font-bold text-slate-700 block mb-1">Facility / Lab Name</label>
+                      <input type="text" name="facility" placeholder="e.g. Apollo Diagnostics"
+                             class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-700 block mb-1">Select File (PDF, PNG, JPG)</label>
+                    <input type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.txt,.csv"
+                           class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-primary hover:file:bg-blue-100 cursor-pointer border border-slate-200 rounded-lg p-1">
+                  </div>
+
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-700 block mb-1">Clinical Notes (Optional)</label>
+                    <textarea name="notes" rows="2" placeholder="Add symptoms or doctor instructions..."
+                              class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"></textarea>
+                  </div>
+
+                  <button type="submit" class="w-full py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-md flex items-center justify-center gap-2">
+                     Run AI Scan &amp; Upload
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Warnings & Out-of-Range Flags Card (7 cols) -->
+            <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-2.5 mb-3">
+                  <div class="p-2 bg-red-100 text-red-600 rounded-lg">
+                    <span class="material-symbols-outlined text-xl">warning</span>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-extrabold text-slate-900">Warnings, Allergies &amp; Risk Flags</h3>
+                    <p class="text-xs text-slate-500">Synthesized out-of-range markers and documented allergy alerts</p>
+                  </div>
+                </div>
+
+                <div class="space-y-3 mt-4 max-h-[360px] overflow-y-auto pr-1">
+                  {% for w in ai_summary.warnings %}
+                  <div class="p-4 rounded-xl border-l-4 {% if w.type == 'allergy' %}bg-red-50 border-red-500 text-red-900{% elif w.type == 'abnormal_doc' %}bg-amber-50 border-amber-500 text-amber-900{% elif w.type == 'condition' %}bg-blue-50 border-blue-500 text-blue-900{% else %}bg-green-50 border-green-500 text-green-900{% endif %} shadow-sm">
+                    <div class="flex items-center justify-between text-xs font-bold mb-1">
+                      <span class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-base">
+                          {% if w.type == 'allergy' %}pill{% elif w.type == 'abnormal_doc' %}error{% elif w.type == 'condition' %}medical_information{% else %}check_circle{% endif %}
+                        </span>
+                        {{ w.title }}
+                      </span>
+                      <span class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded {% if w.type == 'allergy' %}bg-red-200 text-red-900{% elif w.type == 'abnormal_doc' %}bg-amber-200 text-amber-900{% else %}bg-green-200 text-green-900{% endif %}">
+                        {{ w.type }}
+                      </span>
+                    </div>
+                    <p class="text-xs leading-relaxed font-medium mt-1">{{ w.message }}</p>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <!-- Medical Conditions & Treatment bar -->
+              <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                <div>
+                  <span class="text-slate-400 font-bold block text-[10px] uppercase">Active Disease Treatment</span>
+                  <span class="font-extrabold text-slate-800">{{ ai_summary.disease_name|default:"No active disease logged" }}</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-slate-400 font-bold block text-[10px] uppercase">Treatment Duration</span>
+                  <span class="font-extrabold text-slate-800">{{ ai_summary.treatment_years|default:"0" }} Year(s)</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Section 3: Key Parameters Matrix -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-xl">tune</span>
+                <h3 class="text-base font-extrabold text-slate-900">Synthesized Key Health Parameters</h3>
+              </div>
+              <span class="text-xs text-slate-500 font-bold">Baseline Baseline Indicators</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {% for param in ai_summary.key_parameters %}
+              <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between text-[11px] mb-1">
+                    <span class="font-bold text-slate-500">{{ param.label }}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase {% if param.status == 'warning' %}bg-amber-100 text-amber-800{% else %}bg-green-100 text-green-800{% endif %}">
+                      {{ param.status }}
+                    </span>
+                  </div>
+                  <p class="text-sm font-extrabold text-slate-900 mt-1">{{ param.value }}</p>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-200/60">{{ param.detail }}</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Section 4: Document History Vault for Member -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-xl">folder_shared</span>
+                <h3 class="text-base font-extrabold text-slate-900">Analyzed Clinical Vault Documents for {{ ai_summary.name }}</h3>
+              </div>
+              <span class="text-xs font-bold text-slate-500">{{ ai_summary.total_docs }} document(s)</span>
+            </div>
+
+            {% if ai_summary.doc_list %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {% for doc in ai_summary.doc_list %}
+              <div class="p-4 rounded-xl border border-slate-200 hover:border-primary/40 transition-all bg-slate-50/40 space-y-2">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-xl">description</span>
+                    <div>
+                      <h4 class="text-xs font-bold text-slate-900 truncate max-w-[180px]">{{ doc.name }}</h4>
+                      <p class="text-[10px] text-slate-400">{{ doc.get_document_type_display }}</p>
+                    </div>
+                  </div>
+                  {% if doc.has_abnormal %}
+                  <span class="px-2 py-0.5 bg-red-100 text-red-800 text-[10px] font-extrabold rounded-full">Flagged</span>
+                  {% else %}
+                  <span class="px-2 py-0.5 bg-green-100 text-green-800 text-[10px] font-extrabold rounded-full">Normal</span>
+                  {% endif %}
+                </div>
+                {% if doc.facility %}
+                <p class="text-[11px] text-slate-500 flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[13px]">local_hospital</span> {{ doc.facility }}
+                </p>
+                {% endif %}
+                {% if doc.notes %}
+                <p class="text-[11px] text-slate-600 bg-white p-2 rounded border border-slate-100 line-clamp-2">{{ doc.notes }}</p>
+                {% endif %}
+                <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span class="text-slate-400">{{ doc.document_date|date:"M d, Y"|default:"Recent" }}</span>
+                  {% if doc.file %}
+                  <a href="{{ doc.file.url }}" target="_blank" class="text-primary font-bold hover:underline flex items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[14px]">download</span> View File
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-8 text-center text-slate-400 text-xs">
+              <span class="material-symbols-outlined text-3xl mb-1 text-slate-300">folder_open</span>
+              <p>No documents uploaded yet for {{ ai_summary.name }}. Use the upload form above to add lab reports or medical records.</p>
+            </div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== QR CODE MODAL ===== -->
+    <div id="qrModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+      <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-center relative border border-slate-200 animate-fade-up">
+        <button onclick="closeQrModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+
+        <div class="w-12 h-12 rounded-full bg-blue-50 text-primary flex items-center justify-center mx-auto">
+          <span class="material-symbols-outlined text-2xl">qr_code_2</span>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-extrabold text-slate-900">Emergency Health QR Code</h3>
+          <p class="text-xs text-slate-500 mt-1">
+            Scan this code with any mobile camera to view <strong>{{ ai_summary.name }}</strong>'s emergency summary, medical conditions, allergies, and doctor contact info.
+          </p>
+        </div>
+
+        <!-- Generated QR Code Image -->
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block my-2">
+          <img src="{{ qr_code_image_url }}" alt="QR Code Summary" class="w-48 h-48 mx-auto rounded-lg shadow-sm">
+          <p class="text-[10px] text-slate-400 font-bold uppercase mt-2">Patient Code: {{ ai_summary.patient_code }}</p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <a href="{{ qr_view_url }}" target="_blank" class="w-full py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-sm flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">open_in_new</span> Open Public Summary View
+          </a>
+          <button onclick="copyQrLink('{{ qr_view_url }}')" class="w-full py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-200 transition-all border border-slate-200 flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">content_copy</span> Copy Summary Link
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== UPLOAD DOCUMENT MODAL ===== -->
+    <div id="uploadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+      <div class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 relative border border-slate-200">
+        <button onclick="closeUploadModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-xl">cloud_upload</span>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Upload Record for {{ ai_summary.name }}</h3>
+            <p class="text-xs text-slate-500">Supported: PDF, JPG, PNG, TXT (Max 50MB)</p>
+          </div>
+        </div>
+
+        <form method="POST" action="{% url 'ai_analyser' %}" enctype="multipart/form-data" class="space-y-3">
+          {% csrf_token %}
+          <input type="hidden" name="target_member_type" value="{{ selected_member_type }}">
+          <input type="hidden" name="target_member_id" value="{{ selected_member_id }}">
+
+          <div>
+            <label class="text-[11px] font-bold text-slate-700 block mb-1">Document Title</label>
+            <input type="text" name="name" placeholder="e.g. Lipid Profile Lab Test" required
+                   class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 block mb-1">Category</label>
+              <select name="document_type" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                {% for val, label in doc_type_choices %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 block mb-1">Facility Name</label>
+              <input type="text" name="facility" placeholder="e.g. Max Healthcare"
+                     class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-bold text-slate-700 block mb-1">Select File</label>
+            <input type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.txt,.csv"
+                   class="w-full text-xs text-slate-500 border border-slate-200 rounded-lg p-1">
+          </div>
+
+          <button type="submit" class="w-full py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-md flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">auto_awesome</span> Upload &amp; Trigger AI Analysis
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- JavaScript Handlers -->
+    <script>
+      function openQrModal() {
+        document.getElementById('qrModal').classList.remove('hidden');
+      }
+      function closeQrModal() {
+        document.getElementById('qrModal').classList.add('hidden');
+      }
+      function openUploadModal() {
+        document.getElementById('uploadModal').classList.remove('hidden');
+      }
+      function closeUploadModal() {
+        document.getElementById('uploadModal').classList.add('hidden');
+      }
+      function copyQrLink(url) {
+        navigator.clipboard.writeText(url).then(() => {
+          alert('Public AI Summary link copied to clipboard!');
+        });
+      }
+    </script>
+  </body>
+</html>

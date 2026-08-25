@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MediSphere_AI_Summary_{{ ai_summary.name|slugify }}</title>
+  <style>
+    @page { size: A4; margin: 15mm; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.5; font-size: 12px; margin: 0; background: #fff; }
+    .header { border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .brand { font-size: 22px; font-weight: 800; color: #2563eb; letter-spacing: -0.5px; }
+    .subtitle { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; }
+    .report-date { font-size: 10px; color: #64748b; text-align: right; }
+    
+    .patient-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; }
+    .patient-box div { min-width: 140px; margin-bottom: 6px; }
+    .patient-box label { font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: 700; display: block; }
+    .patient-box span { font-size: 13px; font-weight: 700; color: #0f172a; }
+    
+    .section-title { font-size: 14px; font-weight: 800; color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-top: 18px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .score-badge { display: inline-block; background: #2563eb; color: #fff; padding: 4px 10px; border-radius: 20px; font-weight: 800; font-size: 12px; }
+    
+    .summary-text { background: #eff6ff; border-left: 4px solid #2563eb; padding: 10px 14px; border-radius: 4px; font-size: 11px; color: #1e3a8a; font-weight: 500; margin-bottom: 15px; }
+    
+    .alert-card { padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 11px; border-left: 4px solid #ef4444; background: #fef2f2; color: #991b1b; }
+    .alert-card.normal { border-left-color: #22c55e; background: #f0fdf4; color: #166534; }
+    .alert-card.warning { border-left-color: #f59e0b; background: #fffbe6; color: #92400e; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 16px; }
+    th { background: #f1f5f9; text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase; color: #475569; border-bottom: 1px solid #cbd5e1; }
+    td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px; }
+
+    .no-print-bar { background: #1e293b; color: #fff; padding: 10px 20px; text-align: center; font-size: 12px; margin-bottom: 20px; }
+    .no-print-bar button { background: #2563eb; color: white; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 10px; }
+
+    @media print {
+      .no-print-bar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print-bar">
+    <span>Ready to save or print MediSphere AI Summary report for {{ ai_summary.name }}.</span>
+    <button onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <div class="header">
+    <div>
+      <div class="brand">MediSphere</div>
+      <div class="subtitle">AI Member Health Summary &amp; Clinical Analysis Report</div>
+    </div>
+    <div class="report-date">
+      <div><strong>Report Code:</strong> {{ ai_summary.patient_code }}</div>
+      <div><strong>Generated:</strong> {% now "F d, Y H:i" %}</div>
+    </div>
+  </div>
+
+  <!-- Patient Meta -->
+  <div class="patient-box">
+    <div>
+      <label>Patient Name</label>
+      <span>{{ ai_summary.name }}</span>
+    </div>
+    <div>
+      <label>Age / Gender</label>
+      <span>{{ ai_summary.age }} yrs / {{ ai_summary.gender }}</span>
+    </div>
+    <div>
+      <label>Blood Group</label>
+      <span style="color: #dc2626;">{{ ai_summary.blood_group }}</span>
+    </div>
+    <div>
+      <label>BMI Status</label>
+      <span>{{ ai_summary.bmi|default:"22.4" }} ({{ ai_summary.bmi_status }})</span>
+    </div>
+    <div>
+      <label>Health Index Score</label>
+      <span class="score-badge">{{ ai_summary.health_index_score }} / 100</span>
+    </div>
+  </div>
+
+  <!-- AI Executive Summary -->
+  <div class="section-title">AI Clinical Executive Summary</div>
+  <div class="summary-text">
+    {{ ai_summary.general_summary }}
+  </div>
+
+  <!-- Warnings & Allergies -->
+  <div class="section-title">Warnings, Allergies &amp; Out-of-Range Flags</div>
+  {% for w in ai_summary.warnings %}
+  <div class="alert-card {% if w.type == 'clear' %}normal{% elif w.type == 'abnormal_doc' %}warning{% endif %}">
+    <strong>{{ w.title }}:</strong> {{ w.message }}
+  </div>
+  {% endfor %}
+
+  <!-- Medical Conditions & Doctor -->
+  <div class="section-title">Medical Condition &amp; Primary Doctor Details</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Primary Condition</th>
+        <th>Treatment Duration</th>
+        <th>Consultant Doctor</th>
+        <th>Specialization</th>
+        <th>Emergency Contact</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>{{ ai_summary.disease_name|default:"None Reported" }}</strong></td>
+        <td>{{ ai_summary.treatment_years|default:"N/A" }} yr(s)</td>
+        <td>{{ ai_summary.doctor_name }}</td>
+        <td>{{ ai_summary.doctor_spec }}</td>
+        <td><strong>{{ ai_summary.emergency_contact }}</strong> ({{ ai_summary.emergency_phone }})</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Key Health Parameters -->
+  <div class="section-title">Synthesized Key Parameters</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Parameter Label</th>
+        <th>Measured / Logged Value</th>
+        <th>Clinical Status</th>
+        <th>Reference Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for param in ai_summary.key_parameters %}
+      <tr>
+        <td><strong>{{ param.label }}</strong></td>
+        <td>{{ param.value }}</td>
+        <td><span style="font-weight:bold; color: {% if param.status == 'warning' %}#d97706{% else %}#16a34a{% endif %};">{{ param.status|upper }}</span></td>
+        <td>{{ param.detail }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Document Vault Index -->
+  {% if ai_summary.doc_list %}
+  <div class="section-title">Analyzed Records Index</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Document Name</th>
+        <th>Category</th>
+        <th>Facility</th>
+        <th>Date</th>
+        <th>AI Scan Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for doc in ai_summary.doc_list %}
+      <tr>
+        <td>{{ doc.name }}</td>
+        <td>{{ doc.get_document_type_display }}</td>
+        <td>{{ doc.facility|default:"Lab/Hospital" }}</td>
+        <td>{{ doc.document_date|date:"Y-m-d"|default:"N/A" }}</td>
+        <td>
+          {% if doc.has_abnormal %}
+            <span style="color:#dc2626; font-weight:bold;">Flagged (Out-of-range)</span>
+          {% else %}
+            <span style="color:#16a34a; font-weight:bold;">Normal Baseline</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <div style="margin-top: 30px; font-size: 9px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+    MediSphere Automated Clinical AI Summary • Confidential Patient Record • Verify with Licensed Medical Practitioner
+  </div>
+
+  <script>
+    // Trigger print dialogue automatically when page loads
+    window.onload = function() {
+      setTimeout(function() { window.print(); }, 500);
+    };
+  </script>
+</body>
+</html>

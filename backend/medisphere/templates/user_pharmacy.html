@@ -1,0 +1,849 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Pharmacy Portal | MediSphere</title>
+    {% include 'tailwind_setup.html' %}
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8fafc;
+        -webkit-font-smoothing: antialiased;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+        vertical-align: middle;
+        display: inline-block;
+        line-height: 1;
+      }
+      .glass-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .field-input {
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+        background: #fff;
+      }
+      .field-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex">
+    <!-- ===== SIDEBAR ===== -->
+    <aside
+      class="h-screen sticky top-0 w-64 flex-col bg-white border-r border-slate-200 hidden md:flex p-4 gap-2 z-50"
+    >
+      <div class="mb-6 px-2">
+        <a href="{% url 'landing_page' %}" class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-primary">
+            MediSphere
+          </h1>
+        </a>
+        <p
+          class="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1"
+        >
+          Patient Portal
+        </p>
+      </div>
+      <nav class="flex-1 space-y-1">
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_dashboard' %}"
+        >
+          <span class="material-symbols-outlined">dashboard</span>
+          <span class="font-label-md text-label-md">Dashboard</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_profile' %}"
+        >
+          <span class="material-symbols-outlined">manage_accounts</span>
+          <span class="font-label-md text-label-md">My Profile</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'medical_reports' %}"
+        >
+          <span class="material-symbols-outlined">folder_shared</span>
+          <span class="font-label-md text-label-md">Medical Records</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_appointments' %}"
+        >
+          <span class="material-symbols-outlined">calendar_month</span>
+          <span class="font-label-md text-label-md">Appointments &amp; Orders</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 bg-primary text-white font-semibold rounded-lg"
+          href="{% url 'user_pharmacy' %}"
+        >
+          <span class="material-symbols-outlined">medical_services</span>
+          <span class="font-label-md text-label-md">Pharmacy</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'user_lab' %}"
+        >
+          <span class="material-symbols-outlined">biotech</span>
+          <span class="font-label-md text-label-md">Laboratory</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          href="{% url 'expenses' %}"
+        >
+          <span class="material-symbols-outlined">payments</span>
+          <span class="font-label-md text-label-md">Expenses</span>
+        </a>
+      </nav>
+      <div
+        class="mt-auto pt-4 border-t border-slate-200 space-y-1"
+      >
+        <a
+          class="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+          href="{% url 'logout' %}"
+        >
+          <span class="material-symbols-outlined">logout</span>
+          <span class="font-label-md text-label-md">Sign Out</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <!-- Top bar -->
+      <header
+        class="sticky top-0 bg-white border-b border-slate-200 flex items-center justify-between px-margin-desktop h-16 z-40"
+      >
+        <div class="flex items-center gap-3">
+          {% if selected_pharmacy %}
+          <a
+            href="{% url 'user_pharmacy' %}"
+            class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors text-label-md"
+          >
+            <span class="material-symbols-outlined text-[18px]"
+              >arrow_back</span
+            >
+            Pharmacies
+          </a>
+          <span class="material-symbols-outlined text-outline text-[16px]"
+            >chevron_right</span
+          >
+          <span class="font-label-md text-label-md text-on-surface font-bold"
+            >{{ selected_pharmacy.business_name }}</span
+          >
+          {% else %}
+          <span class="font-label-md text-label-md text-on-surface font-bold"
+            >Online Pharmacy</span
+          >
+          {% endif %}
+        </div>
+        <div class="flex items-center gap-3">
+          <div
+            class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-label-md"
+          >
+            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          </div>
+          <div class="hidden sm:block text-right">
+              <p class="font-label-md text-label-md font-bold text-on-surface">
+                {{ user.get_full_name|default:user.username }}
+              </p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">
+                {% if profile %}{{ profile.get_role_display }}{% else %}Member{% endif %}
+              </p>
+          </div>
+        </div>
+      </header>
+
+      <div
+        class="p-margin-desktop max-w-7xl w-full mx-auto space-y-gutter animate-fade-up"
+      >
+        <!-- Django Messages -->
+        {% if messages %} {% for message in messages %}
+        <div
+          class="px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-error-container text-error{% else %}bg-secondary-container/20 text-on-secondary-container{% endif %} font-label-md text-label-md flex items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
+          {{ message }}
+        </div>
+        {% endfor %} {% endif %} {% if not selected_pharmacy %}
+        <!-- ══════ NO PHARMACY SELECTED: SHOW PHARMACIES LIST ══════ -->
+        <section class="space-y-6">
+          <div class="mb-6">
+            <h2 class="text-headline-lg font-headline-lg text-on-surface">
+              Registered Pharmacies
+            </h2>
+            <p class="text-body-md text-on-surface-variant">
+              Select a pharmacy store to view medicine stock, order home
+              delivery, or send prescription uploads.
+            </p>
+          </div>
+
+          {% if pharmacies %}
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for ph in pharmacies %}
+            <div
+              class="glass-card rounded-[20px] p-6 hover:border-primary/40 transition-all flex flex-col justify-between"
+            >
+              <div>
+                {% if ph.business_image %}
+                <div
+                  class="w-full h-36 rounded-2xl border border-outline-variant/20 overflow-hidden mb-4 bg-white"
+                >
+                  <img
+                    src="{{ ph.business_image.url }}"
+                    alt="{{ ph.business_name }}"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                {% else %}
+                <div
+                  class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-4"
+                >
+                  <span class="material-symbols-outlined text-[26px]"
+                    >storefront</span
+                  >
+                </div>
+                {% endif %}
+                <h3 class="font-bold text-headline-md text-on-surface mb-1">
+                  {{ ph.business_name|default:ph.user.get_full_name }}
+                </h3>
+                <p class="text-label-sm text-outline mb-4">
+                  License: {{ ph.license_number|default:"Verified Partner" }}
+                </p>
+                {% if ph.phone %}
+                <p
+                  class="text-label-md text-on-surface-variant flex items-center gap-1.5 mb-2"
+                >
+                  <span class="material-symbols-outlined text-[16px]"
+                    >phone</span
+                  >
+                  {{ ph.phone }}
+                </p>
+                {% endif %} {% if ph.address %}
+                <p
+                  class="text-label-sm text-on-surface-variant flex items-center gap-1.5 mb-4"
+                >
+                  <span class="material-symbols-outlined text-[16px]"
+                    >location_on</span
+                  >
+                  {{ ph.address }}
+                </p>
+                {% endif %}
+              </div>
+              <a
+                href="?pharmacy={{ ph.id }}"
+                class="mt-4 w-full bg-primary text-white text-center font-bold text-label-md py-3 rounded-xl hover:bg-primary/95 transition-all shadow-md"
+              >
+                Visit Pharmacy Shop
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div
+            class="text-center py-20 bg-white border border-outline-variant/30 rounded-[20px]"
+          >
+            <span
+              class="material-symbols-outlined text-[64px] text-outline-variant"
+              >store_off</span
+            >
+            <p class="font-headline-md text-headline-md mt-4 text-on-surface">
+              No registered pharmacies yet.
+            </p>
+            <p class="text-label-sm text-outline mt-1">
+              Please register a new account as a Pharmacy (Medical Store) first.
+            </p>
+          </div>
+          {% endif %}
+        </section>
+
+        {% else %}
+        <!-- ══════ PHARMACY SHOP VIEW ══════ -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left Column (Inventory list) - span 2 -->
+          <div class="lg:col-span-2 space-y-gutter">
+            <!-- Shop Header -->
+            <div class="glass-card rounded-[20px] p-6 md:p-8 space-y-6">
+              <div
+                class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+              >
+                <div class="flex items-center gap-4">
+                  {% if selected_pharmacy.business_image %}
+                  <div
+                    class="w-16 h-16 rounded-2xl border border-outline-variant/30 overflow-hidden bg-white flex-shrink-0"
+                  >
+                    <img
+                      src="{{ selected_pharmacy.business_image.url }}"
+                      alt="{{ selected_pharmacy.business_name }}"
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                  {% else %}
+                  <div
+                    class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary flex-shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[32px]"
+                      >storefront</span
+                    >
+                  </div>
+                  {% endif %}
+                  <div>
+                    <h2
+                      class="text-headline-md font-headline-md text-on-surface font-extrabold"
+                    >
+                      {{ selected_pharmacy.business_name }}
+                    </h2>
+                    <p class="text-label-sm text-outline">
+                      License: {{ selected_pharmacy.license_number }}
+                    </p>
+                    <p class="text-label-sm text-on-surface-variant mt-1">
+                      {{ selected_pharmacy.address|default:"Online Store" }}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  class="bg-secondary-container/20 text-on-secondary-container px-4 py-2.5 rounded-xl font-bold text-label-sm flex items-center gap-1.5 flex-shrink-0"
+                >
+                  <span class="material-symbols-outlined text-[18px]"
+                    >local_shipping</span
+                  >
+                  Home Delivery Active
+                </div>
+              </div>
+              {% if selected_pharmacy.other_info %}
+              <div
+                class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/20 text-xs text-on-surface-variant leading-relaxed"
+              >
+                <p class="font-bold text-on-surface mb-1">
+                  About &amp; Timings
+                </p>
+                {{ selected_pharmacy.other_info|linebreaksbr }}
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Medicines Section -->
+            <div class="glass-card rounded-[20px] p-6 md:p-8">
+              <div
+                class="flex items-center justify-between mb-6 flex-wrap gap-4"
+              >
+                <div>
+                  <h3 class="font-bold text-headline-md text-on-surface">
+                    Available Medicines
+                  </h3>
+                  <p class="text-label-sm text-on-surface-variant">
+                    Search inventory and buy online
+                  </p>
+                </div>
+              </div>
+
+              <!-- Search input -->
+              <form
+                method="GET"
+                action="{% url 'user_pharmacy' %}"
+                class="mb-6 flex gap-3"
+              >
+                <input
+                  type="hidden"
+                  name="pharmacy"
+                  value="{{ selected_pharmacy.id }}"
+                />
+                <input
+                  class="field-input flex-1"
+                  name="q"
+                  placeholder="Search medicines in this pharmacy..."
+                  type="text"
+                  value="{{ search_q }}"
+                />
+                <button
+                  type="submit"
+                  class="bg-primary text-white px-6 rounded-xl hover:bg-primary/95 transition-colors font-bold text-label-md shadow-md"
+                >
+                  Search
+                </button>
+                {% if search_q %}
+                <a
+                  href="?pharmacy={{ selected_pharmacy.id }}"
+                  class="flex items-center justify-center border border-outline-variant px-4 rounded-xl hover:bg-error/5 text-error transition-colors"
+                >
+                  Reset
+                </a>
+                {% endif %}
+              </form>
+
+              {% if medicines %}
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for med in medicines %}
+                <div
+                  class="p-5 border border-outline-variant/30 rounded-2xl bg-surface-container-low flex flex-col justify-between hover:border-primary/30 transition-all"
+                >
+                  <div>
+                    <div class="flex justify-between items-start mb-2">
+                      <h4
+                        class="font-bold text-label-md text-on-surface text-[16px]"
+                      >
+                        {{ med.name }}
+                      </h4>
+                      <span class="text-primary font-black text-headline-md"
+                        >₹{{ med.price }}</span
+                      >
+                    </div>
+                    {% if med.description %}
+                    <p class="text-label-sm text-on-surface-variant mb-4">
+                      {{ med.description }}
+                    </p>
+                    {% endif %}
+
+                    <div class="flex flex-wrap items-center gap-2 mb-4">
+                      {% if med.stock_quantity > 0 %}
+                      <span
+                        class="bg-green-100 text-green-700 text-[10px] font-bold uppercase px-2 py-0.5 rounded"
+                        >In Stock ({{ med.stock_quantity }})</span
+                      >
+                      {% else %}
+                      <span
+                        class="bg-error/10 text-error text-[10px] font-bold uppercase px-2 py-0.5 rounded"
+                        >Out of Stock</span
+                      >
+                      {% endif %} {% if med.is_home_delivery_available %}
+                      <span
+                        class="bg-secondary/10 text-secondary text-[10px] font-bold uppercase px-2 py-0.5 rounded flex items-center gap-0.5"
+                        ><span class="material-symbols-outlined text-[10px]"
+                          >local_shipping</span
+                        >Delivery</span
+                      >
+                      {% else %}
+                      <span
+                        class="bg-surface-container text-outline text-[10px] font-bold uppercase px-2 py-0.5 rounded"
+                        >In-Store Only</span
+                      >
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  {% if med.stock_quantity > 0 and med.is_home_delivery_available %}
+                  <button
+                    onclick="openBuyModal('{{ med.id }}', '{{ med.name }}', '{{ med.price }}')"
+                    class="w-full bg-primary text-white font-bold text-label-sm py-2.5 rounded-xl hover:bg-primary/95 transition-all shadow-md flex items-center justify-center gap-1"
+                  >
+                    <span class="material-symbols-outlined text-[16px]"
+                      >shopping_cart</span
+                    >
+                    Buy Now / Order
+                  </button>
+                  {% else %}
+                  <button
+                    disabled
+                    class="w-full bg-surface-container text-outline font-bold text-label-sm py-2.5 rounded-xl cursor-not-allowed text-center"
+                  >
+                    Purchase Unavailable
+                  </button>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="text-center py-12 text-on-surface-variant">
+                <span
+                  class="material-symbols-outlined text-[48px] text-outline-variant"
+                  >healing</span
+                >
+                <p class="font-label-md text-label-md mt-3">
+                  No medicines matched your query.
+                </p>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Right Column (Prescription uploads + orders summary) -->
+          <div class="space-y-gutter">
+            <!-- Upload Prescription Form -->
+            <div class="glass-card rounded-[20px] p-6">
+              <div class="flex items-center gap-2 mb-4 text-primary">
+                <span class="material-symbols-outlined text-[24px]"
+                  >description</span
+                >
+                <h3 class="font-bold text-headline-md text-on-surface">
+                  Upload Prescription
+                </h3>
+              </div>
+              <p
+                class="text-label-sm text-on-surface-variant mb-4 leading-relaxed"
+              >
+                Have a prescription from your doctor? Upload it here. Our
+                pharmacists will review it and prepare your order.
+              </p>
+
+              <form
+                method="POST"
+                action="{% url 'upload_prescription_order' %}"
+                enctype="multipart/form-data"
+                class="space-y-4"
+              >
+                {% csrf_token %}
+                <input
+                  type="hidden"
+                  name="pharmacy_id"
+                  value="{{ selected_pharmacy.id }}"
+                />
+
+                <div class="space-y-1">
+                  <label
+                    class="font-label-sm text-label-sm text-on-surface-variant"
+                    >Prescription File <span class="text-error">*</span></label
+                  >
+                  <input
+                    class="field-input file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                    name="file"
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    required
+                  />
+                </div>
+
+                <div class="space-y-1">
+                  <label
+                    class="font-label-sm text-label-sm text-on-surface-variant"
+                    >Instructions / Notes (optional)</label
+                  >
+                  <textarea
+                    class="field-input resize-none"
+                    name="notes"
+                    placeholder="e.g. Please deliver after 5 PM, or fill for 2 weeks."
+                    rows="2"
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  class="w-full bg-secondary text-white font-bold text-label-md py-3 rounded-xl hover:bg-secondary/95 transition-all shadow-md"
+                >
+                  Upload &amp; Submit
+                </button>
+              </form>
+            </div>
+
+            <!-- Orders list summary -->
+            <div class="glass-card rounded-[20px] p-6">
+              <h3 class="font-bold text-headline-md text-on-surface mb-1">
+                My Orders &amp; Prescriptions
+              </h3>
+              <p class="text-label-sm text-on-surface-variant mb-6">
+                Track your ongoing transactions
+              </p>
+
+              <!-- Tabs -->
+              <div class="flex border-b border-outline-variant/30 mb-4">
+                <button
+                  onclick="switchTab('orders')"
+                  id="tab-orders-btn"
+                  class="flex-1 text-center font-bold text-label-sm pb-2 border-b-2 border-primary text-primary transition-all"
+                >
+                  Orders
+                </button>
+                <button
+                  onclick="switchTab('prescriptions')"
+                  id="tab-prescriptions-btn"
+                  class="flex-1 text-center font-bold text-label-sm pb-2 text-on-surface-variant hover:text-primary transition-all"
+                >
+                  Prescriptions
+                </button>
+              </div>
+
+              <!-- Orders Tab content -->
+              <div
+                id="tab-orders"
+                class="space-y-3 max-h-[350px] overflow-y-auto pr-1"
+              >
+                {% if user_orders %} {% for order in user_orders %}
+                <div
+                  class="p-3 border border-outline-variant/20 rounded-xl bg-surface-container-low/50"
+                >
+                  <div class="flex justify-between items-start mb-1.5">
+                    <h4
+                      class="font-bold text-label-sm text-on-surface truncate max-w-[150px]"
+                    >
+                      {{ order.medicine.name }}
+                    </h4>
+                    <span
+                      class="px-2 py-0.5 rounded text-[9px] font-bold uppercase {% if order.status == 'pending' %}bg-orange-100 text-orange-500 {% elif order.status == 'confirmed' %}bg-secondary-container/20 text-on-secondary-container {% elif order.status == 'out_for_delivery' %}bg-primary/10 text-primary {% elif order.status == 'delivered' %}bg-green-100 text-green-600 {% else %}bg-error/10 text-error{% endif %}"
+                    >
+                      {{ order.get_status_display }}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-on-surface-variant">
+                    Qty: {{ order.quantity }} · Total:
+                    <span class="font-semibold text-primary"
+                      >₹{{ order.total_price }}</span
+                    >
+                  </p>
+                  <p class="text-[9px] text-outline mt-1">
+                    Pharmacy: {{ order.pharmacy.business_name }}
+                  </p>
+                </div>
+                {% endfor %} {% else %}
+                <p class="text-center py-6 text-outline text-label-sm">
+                  No orders placed yet.
+                </p>
+                {% endif %}
+              </div>
+
+              <!-- Prescriptions Tab content (hidden by default) -->
+              <div
+                id="tab-prescriptions"
+                class="hidden space-y-3 max-h-[350px] overflow-y-auto pr-1"
+              >
+                {% if user_prescriptions %} {% for pres in user_prescriptions %}
+                <div
+                  class="p-3 border border-outline-variant/20 rounded-xl bg-surface-container-low/50"
+                >
+                  <div class="flex justify-between items-start mb-1.5">
+                    <span class="text-[10px] text-outline">Uploaded file</span>
+                    <span
+                      class="px-2 py-0.5 rounded text-[9px] font-bold uppercase {% if pres.status == 'pending' %}bg-orange-100 text-orange-500 {% elif pres.status == 'reviewed' %}bg-secondary-container/20 text-on-secondary-container {% elif pres.status == 'filled' %}bg-primary/10 text-primary {% else %}bg-error/10 text-error{% endif %}"
+                    >
+                      {{ pres.get_status_display }}
+                    </span>
+                  </div>
+                  {% if pres.notes %}
+                  <p
+                    class="text-[11px] text-on-surface-variant truncate italic mb-1"
+                  >
+                    "{{ pres.notes }}"
+                  </p>
+                  {% endif %}
+                  <p class="text-[9px] text-outline">
+                    Pharmacy: {{ pres.pharmacy.business_name }}
+                  </p>
+                </div>
+                {% endfor %} {% else %}
+                <p class="text-center py-6 text-outline text-label-sm">
+                  No prescriptions uploaded yet.
+                </p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <footer
+          class="py-6 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500"
+        >
+          <span class="font-bold text-slate-800">MediSphere</span>
+          <span>&copy; 2026 MediSphere. All rights reserved.</span>
+        </footer>
+      </div>
+    </main>
+
+    <!-- ══════ BUY MEDICINE MODAL ══════ -->
+    <div class="modal-backdrop" id="buyModal">
+      <div
+        class="bg-white rounded-[24px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-fade-up"
+      >
+        <div
+          class="flex items-center justify-between px-8 py-5 border-b border-outline-variant/30"
+        >
+          <h3
+            class="font-headline-md text-headline-md text-on-surface font-extrabold"
+          >
+            Place Medicine Order
+          </h3>
+          <button
+            onclick="closeBuyModal()"
+            class="p-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-all"
+            type="button"
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <form
+          method="POST"
+          action="{% url 'place_order' %}"
+          class="p-8 space-y-4"
+          id="buyForm"
+        >
+          {% csrf_token %}
+          <input type="hidden" name="medicine_id" id="buy-med-id" />
+
+          <div>
+            <label class="font-label-sm text-label-sm text-on-surface-variant"
+              >Medicine Name</label
+            >
+            <input class="field-input" readonly id="buy-med-name" type="text" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="font-label-sm text-label-sm text-on-surface-variant"
+                >Unit Price</label
+              >
+              <input
+                class="field-input"
+                readonly
+                id="buy-med-price"
+                type="text"
+              />
+            </div>
+            <div>
+              <label class="font-label-sm text-label-sm text-on-surface-variant"
+                >Quantity <span class="text-error">*</span></label
+              >
+              <input
+                class="field-input"
+                name="quantity"
+                id="buy-med-qty"
+                type="number"
+                min="1"
+                value="1"
+                oninput="updateTotal()"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="font-label-sm text-label-sm text-on-surface-variant"
+              >Total Price (INR)</label
+            >
+            <input
+              class="field-input font-bold text-primary"
+              readonly
+              id="buy-med-total"
+              type="text"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="font-label-sm text-label-sm text-on-surface-variant"
+              >Delivery Address <span class="text-error">*</span></label
+            >
+            <textarea
+              class="field-input resize-none"
+              name="delivery_address"
+              placeholder="Enter full address for home delivery..."
+              rows="2"
+              required
+            ></textarea>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button
+              type="submit"
+              class="flex-1 bg-primary text-white py-3 rounded-xl font-label-md text-label-md font-bold hover:bg-primary/95 transition-all shadow-md"
+            >
+              Confirm Order
+            </button>
+            <button
+              type="button"
+              onclick="closeBuyModal()"
+              class="flex-1 border border-outline-variant text-on-surface-variant py-3 rounded-xl font-label-md text-label-md hover:bg-surface-container transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Tab switching
+      function switchTab(tab) {
+        const orders = document.getElementById("tab-orders");
+        const prescriptions = document.getElementById("tab-prescriptions");
+        const ordersBtn = document.getElementById("tab-orders-btn");
+        const prescriptionsBtn = document.getElementById(
+          "tab-prescriptions-btn",
+        );
+
+        if (tab === "orders") {
+          orders.classList.remove("hidden");
+          prescriptions.classList.add("hidden");
+          ordersBtn.className =
+            "flex-1 text-center font-bold text-label-sm pb-2 border-b-2 border-primary text-primary transition-all";
+          prescriptionsBtn.className =
+            "flex-1 text-center font-bold text-label-sm pb-2 text-on-surface-variant hover:text-primary transition-all";
+        } else {
+          orders.classList.add("hidden");
+          prescriptions.classList.remove("hidden");
+          ordersBtn.className =
+            "flex-1 text-center font-bold text-label-sm pb-2 text-on-surface-variant hover:text-primary transition-all";
+          prescriptionsBtn.className =
+            "flex-1 text-center font-bold text-label-sm pb-2 border-b-2 border-primary text-primary transition-all";
+        }
+      }
+
+      // Modal behavior
+      const buyModal = document.getElementById("buyModal");
+      let unitPrice = 0;
+
+      function openBuyModal(id, name, price) {
+        document.getElementById("buy-med-id").value = id;
+        document.getElementById("buy-med-name").value = name;
+        document.getElementById("buy-med-price").value = "₹" + price;
+        document.getElementById("buy-med-qty").value = 1;
+        unitPrice = parseFloat(price);
+        updateTotal();
+        buyModal.classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeBuyModal() {
+        buyModal.classList.remove("open");
+        document.body.style.overflow = "";
+      }
+
+      function updateTotal() {
+        const qty = parseInt(document.getElementById("buy-med-qty").value) || 1;
+        const total = (qty * unitPrice).toFixed(2);
+        document.getElementById("buy-med-total").value = "₹" + total;
+      }
+
+      buyModal.addEventListener("click", (e) => {
+        if (e.target === buyModal) closeBuyModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeBuyModal();
+      });
+    </script>
+  </body>
+</html>
